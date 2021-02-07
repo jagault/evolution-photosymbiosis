@@ -1,20 +1,24 @@
-# Set working directory
-setwd("~/zoox/results/2019-03-26/")
-
 # Load packages
 library(data.table)
 library(corHMM)
 library(phytools)
+library(here)
 
+# Set working directory
+setwd(here("analysis/mtree_corHMM"))
 
-# Read in supertree tree and traits--------------------------------------------
-mtree <- read.nexus("~/zoox/data/2017-12-29/mtree_traits/mtree.trees")
+# Read in tree tree and traits-------------------------------------------------
+mtree <- read.nexus(here("data/updated_trees_traits/mtree_traits", 
+                         "mtree.trees"))
 
-traits <- fread("~/zoox/data/2017-12-29/mtree_traits/mtree_traits_B_as_Z.csv",
+traits <- fread(here("data/updated_trees_traits/mtree_traits",
+                     "mtree_traits_B_as_Z.csv"),
                 header = FALSE, col.names = c("taxa", "state"))
 
-az.traits <- fread("~/zoox/data/2017-12-29/mtree_traits/mtree_traits_B_as_A.csv",
+az.traits <- fread(here("data/updated_trees_traits/mtree_traits",
+                        "mtree_traits_B_as_A.csv"),
                    header = FALSE, col.names = c("taxa", "state"))
+
 
 # Format traits and tip labels-------------------------------------------------
 # Drop taxa without data from tree
@@ -24,7 +28,6 @@ class(mtree) <- "multiPhylo"
 # Remove taxa with missing data from traits
 traits <- traits[state != "-"]
 az.traits <- az.traits[state != "-"]
-
 
 # Format trait data for corHMM
 traits[state == "Z", Z := 1]
@@ -38,6 +41,9 @@ set.seed(12)
 mtree <- sample(mtree, 100, replace = FALSE)
 
 # Run corHMM-------------------------------------------------------------------
+# corHMM has built-in capability for running analyses in parallel. Adjust the 
+# n.cores argument to specify the number of cores to use. 
+
 mtree_1rate <- lapply(mtree, corHMM, data = traits[, .(taxa, Z)], rate.cat = 1,
                       node.states = "none", nstarts = 100, n.cores = 40,
                       diagn = TRUE)
@@ -85,6 +91,3 @@ az.mtree_3rate <- lapply(mtree, corHMM, data = az.traits[, .(taxa, Z)],
                          n.cores = 40, diagn = TRUE)
 
 saveRDS(az.mtree_3rate, "mtree_3rate_BasA.rds")
-
-
-
