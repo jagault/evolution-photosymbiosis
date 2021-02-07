@@ -1,15 +1,11 @@
-#Clear workspace
-rm(list = ls())
-
-# Set working directory
-setwd("~/zoox/results/2019-05-13/")
-
 # Load packages
 library(phytools)
 library(data.table)
 library(corHMM)
 library(parallel)
 
+# Set working directory
+setwd(here("analysis/mtree_stree_facultative_removed"))
 
 # Define functions-------------------------------------------------------------
 ctreeAnc <- function (trees, ctree, clist){
@@ -34,11 +30,12 @@ ctreeAnc <- function (trees, ctree, clist){
 }
 
 # Read in trees and traits-----------------------------------------------------
-mtree <- read.nexus("~/zoox/data/2017-12-29/mtree_traits/mtree.trees")
+mtree <- read.nexus(here("data/updated_trees_traits/mtree_traits", 
+                         "mtree.trees"))
 
-traits <- fread("~/zoox/data/2017-12-29/mtree_traits/mtree_traits.csv",
-                 header = FALSE, col.names = c("taxa", "state"))
-
+traits <- fread(here("data/updated_trees_traits/mtree_traits",
+                     "mtree_traits_B_as_Z.csv"),
+                header = FALSE, col.names = c("taxa", "state"))
 
 # Format traits and tip labels-------------------------------------------------
 # Molecular tree
@@ -60,10 +57,15 @@ set.seed(12)
 mtree <- sample(mtree, 100, replace = FALSE)
 
 # Read in corHMM runs----------------------------------------------------------
-rate1 <- readRDS("~/zoox/results/2019-05-13/mtree_1rate_nb.rds")
-rate2 <- readRDS("~/zoox/results/2019-05-13/mtree_2rate_nb.rds")
-rate3 <- readRDS("~/zoox/results/2019-05-13/mtree_3rate_nb.rds")
+here("analysis/mtree_stree_facultative_removed", 
+     "mtree_1rate_nb.rds")
 
+rate1 <- readRDS(here("analysis/mtree_stree_facultative_removed", 
+                      "mtree_1rate_nb.rds"))
+rate2 <- readRDS(here("analysis/mtree_stree_facultative_removed", 
+                      "mtree_2rate_nb.rds"))
+rate3 <- readRDS(here("analysis/mtree_stree_facultative_removed", 
+                      "mtree_3rate_nb.rds"))
 
 # Make rate vectors------------------------------------------------------------
 # 1 rate
@@ -112,16 +114,15 @@ anc3 <- mcmapply(ancRECON, mtree, p = par3,
 saveRDS(anc3, "mtree_nB_3rate_anc.rds")
 
 
-
 # Summarize across all 100 trees-----------------------------------------------
+# Compute 95% consensus tree
 ctree <- consensus(mtree, p = 0.95)
 
+# Make list of ancestral state reconstructions
 anclist <- list(anc1, anc2, anc3)
 
+# Summarize probability at selected nodes
 nodeframes <- mclapply(anclist, ctreeAnc, trees = mtree, ctree = ctree,
                        mc.cores = 40)
 
 saveRDS(nodeframes, "mtree_nB_nodeframes.rds")
-
-
-
