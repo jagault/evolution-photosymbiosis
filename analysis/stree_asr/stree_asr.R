@@ -5,7 +5,7 @@ library(corHMM)
 library(parallel)
 
 # Set working directory
-setwd(here("analysis/mtree_asr"))
+setwd(here("analysis/stree_asr"))
 
 # Read in tree and traits------------------------------------------------------
 stree <- mtree <- read.nexus(here("data/updated_trees_traits/stree_traits", 
