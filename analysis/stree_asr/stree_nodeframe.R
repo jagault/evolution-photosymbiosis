@@ -1,14 +1,10 @@
-#Clear workspace
-rm(list = ls())
-
-# Set working directory
-setwd("~/zoox/results/2019-04-05/")
-
 # Load packages
 library(phytools)
 library(data.table)
 library(parallel)
 
+# Set working directory
+setwd(here("analysis/mtree_asr"))
 
 # Define functions-------------------------------------------------------------
 # ctreeAnc takes a multiphylo object (trees), a corresponding set of 
@@ -39,42 +35,38 @@ ctreeAnc <- function (trees, ctree, clist){
 }
 
 
-# Read in supertree tree and traits--------------------------------------------
-stree <- read.nexus("~/zoox/data/2017-12-29/stree_traits/stree.trees")
+# Read in tree and traits------------------------------------------------------
+stree <- mtree <- read.nexus(here("data/updated_trees_traits/stree_traits", 
+                                  "stree.trees"))
 
-
-traits <- fread("~/zoox/data/2017-12-29/stree_traits/stree_traits_B_as_Z.csv",
-                 header = FALSE, col.names = c("taxa", "state"))
-
+traits <- fread(here("data/updated_trees_traits/stree_traits",
+                     "stree_traits_B_as_Z.csv"),
+                header = FALSE, col.names = c("taxa", "state"))
 
 # Format traits and tip labels-------------------------------------------------
 # Drop taxa without data from tree
 stree <- lapply(stree, drop.tip, tip = traits[state == "-", taxa])
 class(stree) <- "multiPhylo"
 
-
-
-# Select tree used for analysis------------------------------------------------
+# Select trees used for analysis-----------------------------------------------
 set.seed(1)
 stree <- sample(stree, 100, replace = FALSE)
 
 
 # Read in ancestral state reconstructions--------------------------------------
-# Read in asr for facultative coded as zoox
-anc1 <- readRDS("~/zoox/results/2019-03-28/stree_1rate_anc.rds")
-anc2 <- readRDS("~/zoox/results/2019-03-28/stree_2rate_anc.rds")
-anc3 <- readRDS("~/zoox/results/2019-03-28/stree_3rate_anc.rds")
-
+anc1 <- readRDS(here("analysis/stree_asr", "stree_1rate_anc.rds"))
+anc2 <- readRDS(here("analysis/stree_asr", "stree_2rate_anc.rds"))
+anc3 <- readRDS(here("analysis/stree_asr", "stree_3rate_anc.rds"))
 
 # Prep data for summary and run------------------------------------------------
-
+# Compute 95% consensus tree
 ctree <- consensus(stree, p = 0.95)
 
+# Make list of ancestral state reconstructions
 anclist <- list(anc1, anc2, anc3)
 
+# Summarize probability at selected nodes
 nodeframes <- mclapply(anclist, ctreeAnc, trees = stree, ctree = ctree,
                        mc.cores = 40)
 
 saveRDS(nodeframes, "stree_subsample_nodeframes.rds")
-
-
