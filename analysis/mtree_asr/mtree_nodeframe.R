@@ -1,14 +1,10 @@
-#Clear workspace
-rm(list = ls())
-
-# Set working directory
-setwd("~/zoox/results/2019-04-05/")
-
 # Load packages
 library(phytools)
 library(data.table)
 library(parallel)
 
+# Set working directory
+setwd(here("analysis/mtree_asr"))
 
 # Define functions-------------------------------------------------------------
 # ctreeAnc takes a multiphylo object (trees), a corresponding set of 
@@ -38,12 +34,13 @@ ctreeAnc <- function (trees, ctree, clist){
   return(nodeframe)
 }
 
-# Read in supertree tree and traits--------------------------------------------
-mtree <- read.nexus("~/zoox/data/2017-12-29/mtree_traits/mtree.trees")
+# Read in tree and traits------------------------------------------------------
+mtree <- read.nexus(here("data/updated_trees_traits/mtree_traits", 
+                         "mtree.trees"))
 
-traits <- fread("~/zoox/data/2017-12-29/mtree_traits/mtree_traits_B_as_Z.csv",
+traits <- fread(here("data/updated_trees_traits/mtree_traits",
+                     "mtree_traits_B_as_Z.csv"),
                 header = FALSE, col.names = c("taxa", "state"))
-
 
 # Format traits and tip labels-------------------------------------------------
 # Drop taxa without data from tree
@@ -60,21 +57,26 @@ mtree <- sample(mtree, 100, replace = FALSE)
 
 # Read in ancestral state reconstructions--------------------------------------
 # Facultative coded as zoox
-anc1 <- readRDS("~/zoox/results/2019-04-04/mtree_1rate_BasZ_anc.rds")
-anc2 <- readRDS("~/zoox/results/2019-04-04/mtree_2rate_BasZ_anc.rds")
-anc3 <- readRDS("~/zoox/results/2019-04-04/mtree_3rate_BasZ_anc.rds")
+
+
+
+anc1 <- readRDS(here("analysis/mtree_asr", "mtree_1rate_BasZ_anc.rds"))
+anc2 <- readRDS(here("analysis/mtree_asr", "mtree_2rate_BasZ_anc.rds"))
+anc3 <- readRDS(here("analysis/mtree_asr", "mtree_3rate_BasZ_anc.rds"))
 
 # Facultative coded as azoox
-az.anc1 <- readRDS("~/zoox/results/2019-04-04/mtree_1rate_BasA_anc.rds")
-az.anc2 <- readRDS("~/zoox/results/2019-04-04/mtree_2rate_BasA_anc.rds")
-az.anc3 <- readRDS("~/zoox/results/2019-04-04/mtree_3rate_BasA_anc.rds")
+az.anc1 <- readRDS(here("analysis/mtree_asr", "mtree_1rate_BasA_anc.rds"))
+az.anc2 <- readRDS(here("analysis/mtree_asr", "mtree_2rate_BasA_anc.rds"))
+az.anc3 <- readRDS(here("analysis/mtree_asr", "mtree_3rate_BasA_anc.rds"))
 
 # Prep data for summary and run------------------------------------------------
-
+# Compute 95% consensus tree
 ctree <- consensus(mtree, p = 0.95)
 
+# Make list of ancestral state reconstructions
 anclist <- list(anc1, anc2, anc3, az.anc1, az.anc2, az.anc3)
 
+# Summarize probability at selected nodes
 nodeframes <- mclapply(anclist, ctreeAnc, trees = mtree, ctree = ctree,
                        mc.cores = 40)
 
