@@ -57,9 +57,6 @@ set.seed(12)
 mtree <- sample(mtree, 100, replace = FALSE)
 
 # Read in corHMM runs----------------------------------------------------------
-here("analysis/mtree_stree_facultative_removed", 
-     "mtree_1rate_nb.rds")
-
 rate1 <- readRDS(here("analysis/mtree_stree_facultative_removed", 
                       "mtree_1rate_nb.rds"))
 rate2 <- readRDS(here("analysis/mtree_stree_facultative_removed", 
