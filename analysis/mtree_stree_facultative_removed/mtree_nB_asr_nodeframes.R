@@ -82,6 +82,9 @@ par3 <- lapply(par3, na.omit)
 
 
 # Estimate ancestral states----------------------------------------------------
+# Use the mc.cores argument to specify how many cores to estimate ancestral 
+# states in parallel
+
 # 1 rate
 anc1 <- mcmapply(ancRECON, mtree, p = par1, 
                  MoreArgs = list(data = traits[, .(taxa, Z)], 
