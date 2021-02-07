@@ -4,7 +4,7 @@ library(data.table)
 library(parallel)
 
 # Set working directory
-setwd(here("analysis/mtree_asr"))
+setwd(here("analysis/stree_asr"))
 
 # Define functions-------------------------------------------------------------
 # ctreeAnc takes a multiphylo object (trees), a corresponding set of 
