@@ -1,20 +1,18 @@
-#Clear workspace
-rm(list = ls())
-
-# Set working directory
-setwd("~/zoox/results/2019-03-28/")
-
 # Load packages
 library(ape)
 library(data.table)
 library(corHMM)
 library(parallel)
 
+# Set working directory
+setwd(here("analysis/mtree_asr"))
 
-# Read in supertree tree and traits--------------------------------------------
-stree <- read.nexus("~/zoox/data/2017-12-29/stree_traits/stree.trees")
+# Read in tree and traits------------------------------------------------------
+stree <- mtree <- read.nexus(here("data/updated_trees_traits/stree_traits", 
+                                  "stree.trees"))
 
-traits <- fread("~/zoox/data/2017-12-29/stree_traits/stree_traits_B_as_Z.csv",
+traits <- fread(here("data/updated_trees_traits/stree_traits",
+                     "stree_traits_B_as_Z.csv"),
                 header = FALSE, col.names = c("taxa", "state"))
 
 # Format traits and tip labels-------------------------------------------------
@@ -35,10 +33,9 @@ set.seed(1)
 stree <- sample(stree, 100, replace = FALSE)
 
 # Read in corHMM runs----------------------------------------------------------
-rate1 <- readRDS("~/zoox/results/2019-02-04/stree_1rate.rds")
-rate2 <- readRDS("~/zoox/results/2019-02-04/stree_2rate.rds")
-rate3 <- readRDS("~/zoox/results/2019-02-04/stree_3rate.rds")
-
+rate1 <- readRDS(here("analysis/stree_corHMM", "stree_1rate.rds"))
+rate2 <- readRDS(here("analysis/stree_corHMM", "stree_2rate.rds"))
+rate3 <- readRDS(here("analysis/stree_corHMM", "stree_3rate.rds"))
 
 # Make rate vectors------------------------------------------------------------
 # 1 rate
@@ -57,6 +54,9 @@ par3 <- lapply(par3, as.vector)
 par3 <- lapply(par3, na.omit)
 
 # Estimate ancestral states----------------------------------------------------
+# Use the mc.cores argument to specify how many cores to estimate ancestral 
+# states in parallel
+
 # 1 rate
 anc1 <- mcmapply(ancRECON, stree, p = par1, 
                  MoreArgs = list(data = traits[, .(taxa, Z)], 
@@ -84,4 +84,3 @@ anc3 <- mcmapply(ancRECON, stree, p = par3,
                  mc.cores = 40, SIMPLIFY = FALSE)
 
 saveRDS(anc3, "stree_3rate_anc.rds")
-
