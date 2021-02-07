@@ -1,28 +1,29 @@
-#Clear workspace
-rm(list = ls())
-
-# Set working directory
-setwd("~/zoox/results/2019-05-13/")
-
 # Load packages
 library(ape)
 library(data.table)
 library(corHMM)
 library(parallel)
 
+# Set working directory
+setwd(here("analysis/mtree_stree_facultative_removed"))
 
 # Read in trees and traits-----------------------------------------------------
-stree <- read.nexus("~/zoox/data/2017-12-29/stree_traits/stree.trees")
 
-straits <- fread("~/zoox/data/2017-12-29/stree_traits/stree_traits.csv",
-                 header = FALSE, col.names = c("taxa", "state"))
+# supertree
+stree <- mtree <- read.nexus(here("data/updated_trees_traits/stree_traits", 
+                                  "stree.trees"))
 
+traits <- fread(here("data/updated_trees_traits/stree_traits",
+                     "stree_traits_B_as_Z.csv"),
+                header = FALSE, col.names = c("taxa", "state"))
 
-mtree <- read.nexus("~/zoox/data/2017-12-29/mtree_traits/mtree.trees")
+# molecular tree
+mtree <- read.nexus(here("data/updated_trees_traits/mtree_traits", 
+                         "mtree.trees"))
 
-mtraits <- fread("~/zoox/data/2017-12-29/mtree_traits/mtree_traits.csv",
-                 header = FALSE, col.names = c("taxa", "state"))
-
+traits <- fread(here("data/updated_trees_traits/mtree_traits",
+                     "mtree_traits_B_as_Z.csv"),
+                header = FALSE, col.names = c("taxa", "state"))
 
 # Format traits and tip labels-------------------------------------------------
 
@@ -32,7 +33,6 @@ class(stree) <- "multiPhylo"
 
 stree <- lapply(stree, drop.tip, tip = straits[state == "B", taxa])
 class(stree) <- "multiPhylo"
-
 
 straits <- straits[state != "-"]
 straits <- straits[state != "B"]
@@ -57,14 +57,14 @@ mtraits[state == "A", Z := 0]
 
 # Randomly sample 100 trees----------------------------------------------------
 set.seed(1)
-
 stree <- sample(stree, 100, replace = FALSE)
 
 set.seed(12)
 mtree <- sample(mtree, 100, replace = FALSE)
 
-
 # Run analysis-----------------------------------------------------------------
+# corHMM has built-in capability for running analyses in parallel. Adjust the 
+# n.cores argument to specify the number of cores to use. 
 
 ### Molecular tree
 mtree_1rate <- lapply(mtree, corHMM, data = mtraits[, .(taxa, Z)], 
@@ -108,6 +108,3 @@ stree_3rate <- lapply(stree, corHMM, data = straits[, .(taxa, Z)],
                       n.cores = 40)
 
 saveRDS(stree_3rate, "stree_3rate_nb.rds")
-
-
-
