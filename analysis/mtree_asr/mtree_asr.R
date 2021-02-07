@@ -1,23 +1,22 @@
-#Clear workspace
-rm(list = ls())
-
-# Set working directory
-setwd("~/zoox/results/2019-04-04/")
-
 # Load packages
 library(ape)
 library(data.table)
 library(corHMM)
 library(parallel)
 
+# Set working directory
+setwd(here("analysis/mtree_asr"))
 
-# Read in supertree tree and traits--------------------------------------------
-mtree <- read.nexus("~/zoox/data/2017-12-29/mtree_traits/mtree.trees")
+# Read in tree and traits------------------------------------------------------
+mtree <- read.nexus(here("data/updated_trees_traits/mtree_traits", 
+                         "mtree.trees"))
 
-traits <- fread("~/zoox/data/2017-12-29/mtree_traits/mtree_traits_B_as_Z.csv",
+traits <- fread(here("data/updated_trees_traits/mtree_traits",
+                     "mtree_traits_B_as_Z.csv"),
                 header = FALSE, col.names = c("taxa", "state"))
 
-az.traits <- fread("~/zoox/data/2017-12-29/mtree_traits/mtree_traits_B_as_A.csv",
+az.traits <- fread(here("data/updated_trees_traits/mtree_traits",
+                        "mtree_traits_B_as_A.csv"),
                    header = FALSE, col.names = c("taxa", "state"))
 
 # Format traits and tip labels-------------------------------------------------
@@ -28,7 +27,6 @@ class(mtree) <- "multiPhylo"
 # Remove taxa with missing data from traits
 traits <- traits[state != "-"]
 az.traits <- az.traits[state != "-"]
-
 
 # Format trait data for corHMM
 traits[state == "Z", Z := 1]
@@ -42,14 +40,17 @@ set.seed(12)
 mtree <- sample(mtree, 100, replace = FALSE)
 
 # Read in corHMM runs----------------------------------------------------------
-rate1 <- readRDS("~/zoox/results/2019-03-26/mtree_1rate.rds")
-rate2 <- readRDS("~/zoox/results/2019-03-26/mtree_2rate.rds")
-rate3 <- readRDS("~/zoox/results/2019-03-26/mtree_3rate.rds")
+here("analysis/mtree_corHMM", "mtree_1rate.rds")
 
-az.rate1 <- readRDS("~/zoox/results/2019-03-26/mtree_1rate_BasA.rds")
-az.rate2 <- readRDS("~/zoox/results/2019-03-26/mtree_2rate_BasA.rds")
-az.rate3 <- readRDS("~/zoox/results/2019-03-26/mtree_3rate_BasA.rds")
+# Facultative coded as zoox
+rate1 <- readRDS(here("analysis/mtree_corHMM", "mtree_1rate.rds"))
+rate2 <- readRDS(here("analysis/mtree_corHMM", "mtree_2rate.rds"))
+rate3 <- readRDS(here("analysis/mtree_corHMM", "mtree_3rate.rds"))
 
+# Facultative coded as azoox 
+az.rate1 <- readRDS(here("analysis/mtree_corHMM", "mtree_1rate_BasA.rds"))
+az.rate2 <- readRDS(here("analysis/mtree_corHMM", "mtree_2rate_BasA.rds"))
+az.rate3 <- readRDS(here("analysis/mtree_corHMM", "mtree_3rate_BasA.rds"))
 
 # Make rate vectors------------------------------------------------------------
 ### Facultative coded as zoox
@@ -85,8 +86,9 @@ az.par3 <- sapply(az.rate3, "[", "solution")
 az.par3 <- lapply(az.par3, as.vector)
 az.par3 <- lapply(az.par3, na.omit)
 
-
 # Estimate ancestral states----------------------------------------------------
+# Use the mc.cores argument to specify how many cores to estimate ancestral 
+# states in parallel
 
 ### Facultative coded as zoox
 # 1 rate
