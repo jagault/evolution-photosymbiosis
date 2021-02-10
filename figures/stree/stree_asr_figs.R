@@ -12,63 +12,23 @@ setwd(here("analysis/stree_asr"))
 
 # Define functions-------------------------------------------------------------
 
-corSumm <- function(results, rate.cat){
-  # This function takes a list of results from a corHMM analysis and the number
-  # of rate categories in the results. Creates a list of datatables. 
-  # aic is a datatable of aic scores from each tree
-  # aic.summ is a summary of aic scores with median, mean, and std error
-  # par is datable of rate estimates and associated aic for each tree
-  # par.melt is long version of par for easier plotting and summarising
-  # par.summ is summary of pars with median, mean, and std error
-  
-  ### AIC scores ###
-  aic <- unlist(sapply(results, "[", "AICc"))
-  aic <- data.table(aic)
-  # Summarise aic scores
-  aic.summ <- aic[, .(med = median(aic), mean = mean(aic), 
-                      std.err = sd(aic)/sqrt(.N))]
-  
-  ### Parameter esimates ###
-  # Extract list of rate matrices, convert to vectors, and remove na's
-  par <- sapply(results, "[", "solution")
-  par <- lapply(par, as.vector)
-  par <- lapply(par, na.omit)
-  
-  # Make vector of names for rates based on number of rate cats
-  if(rate.cat == 1) {par.names <- c("aic","Z.to.A", "A.to.Z")
-  } else if(rate.cat == 2) {par.names <- c("aic","ZS.to.AS", "AF.to.AS", 
-                                           "AS.to.ZS", "ZF.to.ZS", "AS.to.AF", 
-                                           "ZF.to.AF", "ZS.to.ZF", "AF.to.ZF")
-  
-  } else {par.names <- c("aic","ZS.to.AS", "AM.to.AS", "AS.to.ZS", "ZM.to.ZS", 
-                         "AS.to.AM", "ZM.to.AM", "AF.to.AM", "ZS.to.ZM", 
-                         "AM.to.ZM", "ZF.to.ZM", "AM.to.AF", "ZF.to.AF", 
-                         "ZM.to.ZF", "AF.to.ZF")
-  
-  }
-  # Turn list of rate vectors into list of 1 row datatables
-  par <- lapply(par, function(x) setDT(as.list(x)))
-  # Name each element of list by aic score
-  names(par) <- aic[, aic]
-  # Bind list into datatable with aic id col
-  par <- rbindlist(par, idcol = TRUE)
-  setnames(par, par.names)
-  par[, aic := as.numeric(aic)]
-  # Melt datatable for easier plotting and summary stats
-  par.melt <- melt(par, id.vars = "aic", variable.name = "FromTo", value = "rate")
-  # Summarise paramter estimates
-  par.summ <- par.melt[, .(med = median(rate), mean = mean(rate), 
-                           std.err = sd(rate)/sqrt(.N)), 
-                       by = FromTo]
-  
-  # Create and return list of datatables
-  results.list <- list(aic = aic, aic.summ = aic.summ, par = par, 
-                       par.melt = par.melt, par.summ = par.summ)
-  return(results.list)
-}
-
 treePaint <- function(tree, anc, rate.cat)
 {
+  ### This function takes a tree with branch lengths, and a set of ancestral
+  ### state reconstructions made either with ancRECON or from summarizing
+  ### across all trees in subsample. ASR should be a datatable with cols
+  ### labeled with rate categories AS, ZS, etc. 
+  ### The function returns a tree with branches painted according to the most 
+  ### likely state at their ancestor node. Unlike the maxPaint function, this 
+  ### uses a cutoff. If the probability of any given state is less than 0.75,
+  ### the branch is painted grey to denote uncertainty. 
+  
+  ### tree is a tree of class phylo with branch lengths
+  ### anc is a datatable that lists the probability at each internal node of 
+  ### each state. 
+  ### rate.cat specifies the number of rate categories that were fit to the tree
+  ### to estimate the rates used for the ancestral state reconstruction
+  
   if (rate.cat == 1)
   {
     as.edges <- unique(tree$edge[,1])[which(anc$lik.anc.states[,1]>0.75)]
@@ -202,35 +162,22 @@ azPaint <- function(tree, anc, rate.cat)
   return(outlist)
 }
 
-fastPaint <- function(tree, anc, rate.cat)
-{
-  
-  anc <- copy(anc)
-  
-  if (rate.cat == 2)
-  {
-    anc[, fsum := rowSums(.SD), .SDcols = c("AF", "ZF")]
-    
-    f.edges <- unique(tree$edge[,1])[which(anc[,fsum]>0.75)]
-    f.paint <- unlist(Descendants(tree, node = f.edges, type = "children"))
-    
-    tree <- paintBranches(tree, edge = f.paint, state = "F")
-  } else
-  {
-    anc[, fsum := rowSums(.SD), .SDcols = c("ZS", "AM", "AF", "ZF")]
-    
-    f.edges <- unique(tree$edge[,1])[which(anc[,fsum]>0.75)]
-    f.paint <- unlist(Descendants(tree, node = f.edges, type = "children"))
-    
-    tree <- paintBranches(tree, edge = f.paint, state = "F")
-  }
-  
-  return(tree)
-  
-}
-
 maxPaint <- function(tree, anc, rate.cat)
 {
+  
+  ### This function takes a tree with branch lengths, and a set of ancestral
+  ### state reconstructions made either with ancRECON or from summarizing
+  ### across all trees in subsample. ASR should be a datatable with cols
+  ### labeled with rate categories AS, ZS, etc. 
+  ### The function returns a tree with branches painted according to the most 
+  ### likely state at their ancestor node. 
+  
+  ### tree is a tree of class phylo with branch lengths
+  ### anc is a datatable that lists the probability at each internal node of 
+  ### each state. 
+  ### rate.cat specifies the number of rate categories that were fit to the tree
+  ### to estimate the rates used for the ancestral state reconstruction
+  
   anc <- copy(anc)
   anc$lik.anc.states[,max :=  names(.SD)[max.col(.SD)]]
   if (rate.cat == 1)
@@ -320,146 +267,6 @@ maxPaint <- function(tree, anc, rate.cat)
     }
   }
   return(tree)
-}
-
-ptreePaint <- function(tree, anc, rate.cat, p)
-{
-  if (rate.cat == 1)
-  {
-    as.edges <- unique(tree$edge[,1])[which(anc$lik.anc.states[,1]>p)]
-    as.paint <- unlist(Descendants(tree, node = as.edges, type = "children"))
-    
-    zs.edges <- unique(tree$edge[,1])[which(anc$lik.anc.states[,2]>p)]
-    zs.paint <- unlist(Descendants(tree, node = zs.edges, type = "children"))
-    
-    plist <- list(as.paint, zs.paint)
-    nvec <- c("A", "Z")
-    
-    for (i in 1:length(plist))
-    {
-      tryCatch(
-        {
-          tree <- paintBranches(tree, edge = plist[[i]], state = nvec[i])
-        }, error = function(e)
-        {
-          message("Some regimes could not be printed on tree.")
-        })
-    }
-    
-  }
-  else if (rate.cat == 2)
-  {
-    as.edges <- unique(tree$edge[,1])[which(anc$lik.anc.states[,1]>p)]
-    as.paint <- unlist(Descendants(tree, node = as.edges, type = "children"))
-    
-    zs.edges <- unique(tree$edge[,1])[which(anc$lik.anc.states[,2]>p)]
-    zs.paint <- unlist(Descendants(tree, node = zs.edges, type = "children"))
-    
-    af.edges <- unique(tree$edge[,1])[which(anc$lik.anc.states[,3]>p)]
-    af.paint <- unlist(Descendants(tree, node = af.edges, type = "children"))
-    
-    zf.edges <- unique(tree$edge[,1])[which(anc$lik.anc.states[,4]>p)]
-    zf.paint <- unlist(Descendants(tree, node = zf.edges, type = "children"))
-    
-    plist <- list(as.paint, zs.paint, af.paint, zf.paint)
-    nvec <- c("AS", "ZS", "AF", "ZF")
-    
-    for (i in 1:length(plist))
-    {
-      tryCatch(
-        {
-          tree <- paintBranches(tree, edge = plist[[i]], state = nvec[i])
-        }, error = function(e)
-        {
-          message("Some regimes could not be printed on tree.")
-        })
-    }
-  } else
-  {
-    # Designate edges that should be painted in each state
-    as.edges <- unique(tree$edge[,1])[which(anc$lik.anc.states[,1]>p)]
-    as.paint <- unlist(Descendants(tree, node = as.edges, type = "children"))
-    
-    zs.edges <- unique(tree$edge[,1])[which(anc$lik.anc.states[,2]>p)]
-    zs.paint <- unlist(Descendants(tree, node = zs.edges, type = "children"))
-    
-    am.edges <- unique(tree$edge[,1])[which(anc$lik.anc.states[,3]>p)]
-    am.paint <- unlist(Descendants(tree, node = am.edges, type = "children"))
-    
-    zm.edges <- unique(tree$edge[,1])[which(anc$lik.anc.states[,4]>p)]
-    zm.paint <- unlist(Descendants(tree, node = zm.edges, type = "children"))
-    
-    af.edges <- unique(tree$edge[,1])[which(anc$lik.anc.states[,5]>p)]
-    af.paint <- unlist(Descendants(tree, node = af.edges, type = "children"))
-    
-    zf.edges <- unique(tree$edge[,1])[which(anc$lik.anc.states[,6]>p)]
-    zf.paint <- unlist(Descendants(tree, node = zf.edges, type = "children"))
-    
-    plist <- list(as.paint, zs.paint, am.paint, zm.paint, af.paint, zf.paint)
-    nvec <- c("AS", "ZS", "AM", "ZM", "AF", "ZF")
-    
-    for (i in 1:length(plist))
-    {
-      tryCatch(
-        {
-          tree <- paintBranches(tree, edge = plist[[i]], state = nvec[i])
-        }, error = function(e)
-        {
-          message("Some regimes could not be printed on tree.")
-        })
-    }
-  }
-  return(tree)
-}
-
-
-maxFast <- function(tree, anc, rate.cat)
-{
-  
-  anc <- copy(anc)
-  
-  if (rate.cat == 2)
-  {
-    
-    anc[, S := rowSums(.SD), .SDcols = c("AS", "ZS")]
-    anc[, L := rowSums(.SD), .SDcols = c("AF", "ZF")]
-    anc <- anc[, .(S, L)]
-    anc[,max :=  names(.SD)[max.col(.SD)]]
-    
-    s.edges <- unique(tree$edge[,1])[which(anc[, max] == "S")]
-    s.paint <- unlist(Descendants(tree, node = s.edges, type = "children"))
-    
-    l.edges <- unique(tree$edge[,1])[which(anc[, max] == "L")]
-    l.paint <- unlist(Descendants(tree, node = l.edges, type = "children"))
-    
-    tree <- paintBranches(tree, edge = s.paint, state = "Stable")
-    tree <- paintBranches(tree, edge = l.paint, state = "Labile")
-    
-  } else
-  {
-    
-    anc[, S := rowSums(.SD), .SDcols = c("AS", "ZM")]
-    anc[, L := rowSums(.SD), .SDcols = c("ZS", "AM")]
-    anc[, V := rowSums(.SD), .SDcols = c("AF", "ZF")]
-    anc <- anc[, .(S, L, V)]
-    anc[,max :=  names(.SD)[max.col(.SD)]]
-    
-    s.edges <- unique(tree$edge[,1])[which(anc[, max] == "S")]
-    s.paint <- unlist(Descendants(tree, node = s.edges, type = "children"))
-    
-    l.edges <- unique(tree$edge[,1])[which(anc[, max] == "L")]
-    l.paint <- unlist(Descendants(tree, node = l.edges, type = "children"))
-    
-    v.edges <- unique(tree$edge[,1])[which(anc[, max] == "V")]
-    v.paint <- unlist(Descendants(tree, node = v.edges, type = "children"))
-    
-    tree <- paintBranches(tree, edge = s.paint, state = "Stable")
-    tree <- paintBranches(tree, edge = l.paint, state = "Labile")
-    tree <- paintBranches(tree, edge = v.paint, state = "Volatile")
-  }
-  
-  return(tree)
-  
 }
 
 # Read in tree and traits------------------------------------------------------
@@ -603,12 +410,6 @@ fanc3 <- list(fanc3)
 names(fanc3) <- "lik.anc.states"
 
 
-### Paint trees with azoox/zoox recons
-og3.asr <- azPaint(ctree, anc = fanc3$lik.anc.states, rate.cat = 3)
-
-### Paint summed fast categories on trees
-rc3.asr <- maxFast(ctree, fanc3$lik.anc.states, rate.cat = 3)
-
 ### Paint trees with rate categories
 # 2 rate
 f3.asr <- treePaint(tree = ctree, anc = fanc3, rate.cat = 3)
@@ -616,28 +417,8 @@ f3.asr <- treePaint(tree = ctree, anc = fanc3, rate.cat = 3)
 ### Paint tree with rate cats based on max p at each node
 m3.asr <- maxPaint(tree = ctree, anc = fanc3, rate.cat = 3)
 
-### Paint tree with different cutoff values
-f5.asr <- ptreePaint(tree = ctree, anc = fanc3, rate.cat = 3, p = 0.5)
 
 ### Plot-----------------------------------------------------------------------
-
-# Plot binary asr
-pdf(file = "binary_asr.pdf", width = 5, height = 5)
-plotSimmap(og3.asr$tree, type = "fan", ftype = "off", r1.cols, lwd = 0.5)
-dev.off()
-
-# Plot binary with names for reference 
-pdf(file = "binary_reference.pdf", width = 60.84, height = 40.63)
-plotSimmap(og3.asr$tree, type = "fan", fsize = 0.3, r1.cols, lwd = 0.5)
-nodelabels(pie = as.matrix(og3.asr$nodeprobs), cex = 0.05,
-           piecol = r1.cols[-1])
-tiplabels(pch = 19, cex = 0.5, col = trait.cols[ctree$tip.label])
-dev.off()
-
-# Plot summed fast cats
-pdf(file = "fast_cats.pdf", width = 5, height = 5)
-plotSimmap(rc3.asr, type = "fan", ftype = "off", fast.cols, lwd = 0.5)
-dev.off()
 
 # Plot all 4 categories
 pdf(file = "all4_asr.pdf", width = 5, height = 5)
@@ -655,7 +436,6 @@ nodelabels(pie = as.matrix(fanc3$lik.anc.states), cex = 0.05,
 tiplabels(pch = 19, cex = 0.5, col = trait.cols[ctree$tip.label])
 dev.off()
 
-
 # Plot individual asrs---------------------------------------------------------
 
 anc3 <- lapply(anc3, "[[", "lik.anc.states")
@@ -664,7 +444,7 @@ anc3 <- lapply(anc3, setnames, c("AS", "ZS", "AM", "ZM", "AF", "ZF"))
 #anc3 <- lapply(anc3, list)
 names(anc3) <- rep("lik.anc.states", length(anc3))
 
-
+# Paint all 100 trees
 all.paint <- list()
 for (i in 1:length(stree)){
   all.paint[[i]] <- maxPaint(stree[[i]], anc3[i], rate.cat = 3)
