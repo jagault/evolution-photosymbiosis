@@ -4,13 +4,15 @@ library(phytools)
 library(phangorn)
 library(here)
 
-# Suppress scientific notation
-options(scipen = 999)
-
 # Set working directory
 setwd(here("analysis/stree_asr"))
 
+# Source helper functions for plotting
+source(here("R/plotting_functions.R"))
+
 # Define functions-------------------------------------------------------------
+
+
 
 treePaint <- function(tree, anc, rate.cat)
 {
@@ -308,8 +310,8 @@ ctree <- compute.brlen(ctree)
 
 ### Lengthen some short branches for presentation
 # Plot with edge labels to see which to change
-plotTree(ctree, ftype = "off", type = "fan")
-edgelabels(frame = "n")
+# plotTree(ctree, ftype = "off", type = "fan")
+# edgelabels(frame = "n")
 
 # Root
 ctree$edge.length[1] <- ctree$edge.length[1] + 0.3
@@ -370,35 +372,10 @@ ctree$edge.length[1015] <- ctree$edge.length[1015] + 0.01
 ctree$edge.length[1016] <- ctree$edge.length[1016] + 0.01
 
 
-# Make color vectors for plotting combined rate cats
-# 1 rate
-r1.cols <- c("grey", "#084594", "#E6AB02")
-names(r1.cols) <- c(1, "A", "Z")
+### Format ancestral state recon-----------------------------------------------
 
-# f3.cols <- c("grey", "grey", "red", "red", "grey", "red", "red")
-# names(f3.cols) <- c(1, "AS", "ZS", "AM", "ZM", "AF", "ZF")
-
-# Fast categories
-# rc.cols <- c("grey", "red")
-# names(rc.cols) <- c(1, "F")
-fast.cols <- c("#bdbdbd", "#fc9272", "#a50f15")
-names(fast.cols) <- c("Stable", "Labile", "Volatile")
-
-
-# Regular colors for plotting all rate cats
-r3.cols <- c("grey", "#084594", "#F781BF", "#1B9E77", "#E6AB02", "#7570B3", "#E41A1C")
-names(r3.cols) <- c(1, "AS", "ZS", "AM", "ZM", "AF", "ZF")
-
-# Make vector of trait colors
-trait.cols <- traits[, state]
-names(trait.cols) <- traits[, taxa]
-trait.cols[trait.cols == "A"] <- "#084594"
-trait.cols[trait.cols == "Z"] <- "#E6AB02"
-
-
-
-### Format f.anc to look like asrs generated from ancRECON so I can use the 
-### treePaint function I wrote
+# Format f.anc to look like asrs generated from ancRECON for use with 
+# ploting functions 
 fanc3 <- f.anc[[3]]
 setnames(fanc3, c("AS", "ZS", "AM", "ZM", "AF", "ZF", "ctree.nodes"))
 fanc3 <- fanc3[, .(AS = mean(AS), ZS = mean(ZS), 
@@ -410,25 +387,40 @@ fanc3 <- list(fanc3)
 names(fanc3) <- "lik.anc.states"
 
 
-### Paint trees with rate categories
-# 2 rate
+### Paint trees with rate categories-------------------------------------------
+
+# Based on probability cutoff at nodes
 f3.asr <- treePaint(tree = ctree, anc = fanc3, rate.cat = 3)
 
+# Based on maximum probability at nodes
 ### Paint tree with rate cats based on max p at each node
 m3.asr <- maxPaint(tree = ctree, anc = fanc3, rate.cat = 3)
 
 
 ### Plot-----------------------------------------------------------------------
 
-# Plot all 4 categories
+# Define colors for plotting
+r3.cols <- c("grey", "#084594", "#F781BF", "#1B9E77", 
+             "#E6AB02", "#7570B3", "#E41A1C")
+names(r3.cols) <- c(1, "AS", "ZS", "AM", "ZM", "AF", "ZF")
+
+# Make vector of trait colors
+# trait.cols <- traits[, state]
+# names(trait.cols) <- traits[, taxa]
+# trait.cols[trait.cols == "A"] <- "#084594"
+# trait.cols[trait.cols == "Z"] <- "#E6AB02"
+
+# Plot based on  probability cutoff at nodes
 pdf(file = "all4_asr.pdf", width = 5, height = 5)
 plotSimmap(f3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
 dev.off()
 
+# Plot based on maximum probability at nodes
 pdf(file = "all4_maxp_asr.pdf", width = 5, height = 5)
 plotSimmap(m3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
 dev.off()
 
+# Plot large figure with tip labels and pie charts at nodes 
 pdf(file = "all4_maxp_reference.pdf", width = 60.84, height = 40.63)
 plotSimmap(m3.asr, type = "fan", fsize = 0.3, r3.cols, lwd = 1)
 nodelabels(pie = as.matrix(fanc3$lik.anc.states), cex = 0.05,
@@ -438,10 +430,10 @@ dev.off()
 
 # Plot individual asrs---------------------------------------------------------
 
+# Format asr's for plotting function 
 anc3 <- lapply(anc3, "[[", "lik.anc.states")
 anc3 <- lapply(anc3, data.table)
 anc3 <- lapply(anc3, setnames, c("AS", "ZS", "AM", "ZM", "AF", "ZF"))
-#anc3 <- lapply(anc3, list)
 names(anc3) <- rep("lik.anc.states", length(anc3))
 
 # Paint all 100 trees
@@ -450,13 +442,7 @@ for (i in 1:length(stree)){
   all.paint[[i]] <- maxPaint(stree[[i]], anc3[i], rate.cat = 3)
 }
 
-
-
-# pdf(file = "3rate_asr1.pdf", width = 50, height = 50)
-# layout(matrix(1:100, 5, 20, byrow = TRUE))
-# lapply(all.paint, plotSimmap, ftype = "off", r3.cols)
-# dev.off()
-
+# Save as a pdf
 vec <- c(1:100)
 pdf(file = "3rate_asr1.pdf", width = 50, height = 50)
 layout(matrix(1:100, 5, 20, byrow = TRUE))
@@ -465,7 +451,3 @@ for(i in 1:length(all.paint)){
   mtext(vec[i])
 }
 dev.off()
-
-
-
-
