@@ -151,17 +151,17 @@ names(r3.cols) <- c(1, "AS", "ZS", "AM", "ZM", "AF", "ZF")
 # trait.cols[trait.cols == "Z"] <- "#E6AB02"
 
 # Plot based on  probability cutoff at nodes
-pdf(file = "all4_asr.pdf", width = 5, height = 5)
-plotSimmap(f3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
-dev.off()
+# pdf(file = "all4_asr.pdf", width = 5, height = 5)
+# plotSimmap(f3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
+# dev.off()
 
 # Plot based on maximum probability at nodes
-pdf(file = "all4_maxp_asr.pdf", width = 5, height = 5)
+pdf(file = "stree_consensus_asr.pdf", width = 5, height = 5)
 plotSimmap(m3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
 dev.off()
 
 # Plot large figure with tip labels and pie charts at nodes 
-pdf(file = "all4_maxp_reference.pdf", width = 60.84, height = 40.63)
+pdf(file = "stree_consensus_asr_tiplabels.pdf", width = 60.84, height = 40.63)
 plotSimmap(m3.asr, type = "fan", fsize = 0.3, r3.cols, lwd = 1)
 nodelabels(pie = as.matrix(fanc3$lik.anc.states), cex = 0.05,
            piecol = r3.cols[-1])
@@ -184,7 +184,7 @@ for (i in 1:length(stree)){
 
 # Save as a pdf
 vec <- c(1:100)
-pdf(file = "3rate_asr1.pdf", width = 50, height = 50)
+pdf(file = "stree_individual_asr.pdf", width = 50, height = 50)
 layout(matrix(1:100, 5, 20, byrow = TRUE))
 for(i in 1:length(all.paint)){
   plotSimmap(all.paint[[i]], ftype = "off", r3.cols, mar = c(0.1, 0.1, 1.5, 0.1))
