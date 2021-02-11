@@ -27,3 +27,18 @@ Rstudio no longer supports the use of the default password when none is specifie
 The use of `-v /path/to/repo:/home/rstudio` will set up a bind mount between the project repo and rstudio within the container. All files within the repo will be available within Rstudio and saved changes will persist outside of the container.  
 
 Because the corHMM analyses take a very long time to run, it is recommended that they are not run through the Rstudio console. Rather it is better to source the scripts to R through the terminal. This way the analyses can be monitored via a log file and the R session within Rstudio can be refreshed freely. The analyses can also be run in the background through the terminal via `tmux` or `screen`. Neither are included with the container but can be installed within it if desired. R and all files within the repo are available through the terminal window included with Rstudio.
+
+### Structure of repository  
+
+`/R` contains helper functions used through the scripts.  
+
+`/data` contains the phylogenetic trees and trait data used for the analyses. 
+
+`/analysis` contains the scripts to perform the analyses with associated results. 
+  * `/stree_corHMM` contains script to run the corHMM analysis across the supertree posterior distribution.
+  * `/stree_asr` contains the script `stree_asr.R` which performs ancestral state reconstruction based on the rates from the corHMM analysis and the script `stree_nodeframe.R` which summarizes the results of the ancestral state reconstruction across the supertree posterior distribution.  
+  * `/mtree_corHMM` contains script to run the corHMM analysis across the molecular tree posterior distribution.
+  * `/mtree_asr` contains the script `mtree_asr.R` which performs ancestral state reconstruction based on the rates from the corHMM analysis and the script `mtree_nodeframe.R` which summarizes the results of the ancestral state reconstruction across the molecular posterior distribution.  
+  * `/mtree_stree_facultative_removed` contains scripts to rerun the above analyses across the supertree and molecular tree posterior distribution with facultative species removed.  
+  
+`/figures` contains the scripts necessary to reproduce the raw figures from the publication. 
