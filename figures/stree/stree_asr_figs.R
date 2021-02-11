@@ -41,11 +41,14 @@ f.anc <- readRDS(here("analysis/stree_asr", "stree_subsample_nodeframes.rds"))
 # Read in 100 individual asrs
 anc3 <- readRDS(here("analysis/stree_asr", "stree_3rate_anc.rds"))
 
-# Plot ancestral state reconstructions-----------------------------------------
+
+# Prep consensus tree for plotting---------------------------------------------
+
 # Make consensus tree
 ctree <- consensus(stree, p = 0.95)
-# Compute banch lengths of ctree for mapping states. The actual branch lengths
-# don't matter at this point. They just need values or treePaint won't work. 
+
+# Compute branch lengths of ctree for mapping states. The actual branch lengths
+# don't matter. They just need values for helper functions to work.
 ctree <- compute.brlen(ctree)
 
 ### Lengthen some short branches for presentation
@@ -86,16 +89,15 @@ ctree$edge.length[1788] <- ctree$edge.length[1788] + 0.01
 ctree$edge.length[1787] <- ctree$edge.length[1787] - 0.01
 ctree$edge.length[1858] <- ctree$edge.length[1858] + 0.01
 
+
 ### Complexa
 ctree$edge.length[3] <- ctree$edge.length[3] + 0.01
 ctree$edge.length[2] <- ctree$edge.length[2] - 0.01
 ctree$edge.length[1039] <- ctree$edge.length[1039] + 0.01
 
-
 ctree$edge.length[561] <- ctree$edge.length[561] + 0.01
 ctree$edge.length[560] <- ctree$edge.length[560] - 0.01
 ctree$edge.length[1036] <- ctree$edge.length[1036] + 0.01
-
 
 ctree$edge.length[562] <- ctree$edge.length[562] + 0.01
 ctree$edge.length[560] <- ctree$edge.length[560] - 0.01
@@ -133,7 +135,6 @@ names(fanc3) <- "lik.anc.states"
 f3.asr <- treePaint(tree = ctree, anc = fanc3, rate.cat = 3)
 
 # Based on maximum probability at nodes
-### Paint tree with rate cats based on max p at each node
 m3.asr <- maxPaint(tree = ctree, anc = fanc3, rate.cat = 3)
 
 
@@ -143,17 +144,6 @@ m3.asr <- maxPaint(tree = ctree, anc = fanc3, rate.cat = 3)
 r3.cols <- c("grey", "#084594", "#F781BF", "#1B9E77", 
              "#E6AB02", "#7570B3", "#E41A1C")
 names(r3.cols) <- c(1, "AS", "ZS", "AM", "ZM", "AF", "ZF")
-
-# Make vector of trait colors
-# trait.cols <- traits[, state]
-# names(trait.cols) <- traits[, taxa]
-# trait.cols[trait.cols == "A"] <- "#084594"
-# trait.cols[trait.cols == "Z"] <- "#E6AB02"
-
-# Plot based on  probability cutoff at nodes
-# pdf(file = "all4_asr.pdf", width = 5, height = 5)
-# plotSimmap(f3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
-# dev.off()
 
 # Plot based on maximum probability at nodes
 pdf(file = "stree_consensus_asr.pdf", width = 5, height = 5)
