@@ -12,4 +12,4 @@ Or pull the image directly from dockerhub via the following:
 
 Use the following to run the image in a container. 
 
-`docker run -p 8787:8787 -v /home/jordan/git_repos/evolution-photosymbiosis:/home/rstudio -e PASSWORD=test jagault/evolution-photosymbiosis`
+`docker run -d -p 8787:8787 -v /path/to/repo:/home/rstudio -e PASSWORD=test jagault/evolution-photosymbiosis`
