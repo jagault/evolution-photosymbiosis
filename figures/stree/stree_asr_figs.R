@@ -5,7 +5,7 @@ library(phangorn)
 library(here)
 
 # Set working directory
-setwd(here("analysis/stree_asr"))
+setwd(here("figures/stree"))
 
 # Source helper functions for plotting
 source(here("R/plotting_functions.R"))
@@ -140,10 +140,16 @@ m3.asr <- maxPaint(tree = ctree, anc = fanc3, rate.cat = 3)
 
 ### Plot-----------------------------------------------------------------------
 
-# Define colors for plotting
+# Define branch colors for plotting
 r3.cols <- c("grey", "#084594", "#F781BF", "#1B9E77", 
              "#E6AB02", "#7570B3", "#E41A1C")
 names(r3.cols) <- c(1, "AS", "ZS", "AM", "ZM", "AF", "ZF")
+
+# Make vector of trait colors for tips
+trait.cols <- traits[, state]
+names(trait.cols) <- traits[, taxa]
+trait.cols[trait.cols == "A"] <- "#084594"
+trait.cols[trait.cols == "Z"] <- "#E6AB02"
 
 # Plot based on maximum probability at nodes
 pdf(file = "stree_consensus_asr.pdf", width = 5, height = 5)
@@ -154,7 +160,7 @@ dev.off()
 pdf(file = "stree_consensus_asr_tiplabels.pdf", width = 60.84, height = 40.63)
 plotSimmap(m3.asr, type = "fan", fsize = 0.3, r3.cols, lwd = 1)
 nodelabels(pie = as.matrix(fanc3$lik.anc.states), cex = 0.05,
-           piecol = r3.cols[-1])
+         piecol = r3.cols[-1])
 tiplabels(pch = 19, cex = 0.5, col = trait.cols[ctree$tip.label])
 dev.off()
 
