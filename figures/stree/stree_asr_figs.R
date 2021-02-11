@@ -12,7 +12,7 @@ source(here("R/plotting_functions.R"))
 
 
 # Read in tree and traits------------------------------------------------------
-stree <- mtree <- read.nexus(here("data/updated_trees_traits/stree_traits", 
+stree <- read.nexus(here("data/updated_trees_traits/stree_traits", 
                                   "stree.trees"))
 
 traits <- fread(here("data/updated_trees_traits/stree_traits",
