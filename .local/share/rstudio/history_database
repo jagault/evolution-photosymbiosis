@@ -1,0 +1,758 @@
+0:{
+0:# Designate edges that should be painted in each state
+0:as.edges <- unique(tree$edge[,1])[which(anc$lik.anc.states[,1]>p)]
+0:as.paint <- unlist(Descendants(tree, node = as.edges, type = "children"))
+0:zs.edges <- unique(tree$edge[,1])[which(anc$lik.anc.states[,2]>p)]
+0:zs.paint <- unlist(Descendants(tree, node = zs.edges, type = "children"))
+0:am.edges <- unique(tree$edge[,1])[which(anc$lik.anc.states[,3]>p)]
+0:am.paint <- unlist(Descendants(tree, node = am.edges, type = "children"))
+0:zm.edges <- unique(tree$edge[,1])[which(anc$lik.anc.states[,4]>p)]
+0:zm.paint <- unlist(Descendants(tree, node = zm.edges, type = "children"))
+0:af.edges <- unique(tree$edge[,1])[which(anc$lik.anc.states[,5]>p)]
+0:af.paint <- unlist(Descendants(tree, node = af.edges, type = "children"))
+0:zf.edges <- unique(tree$edge[,1])[which(anc$lik.anc.states[,6]>p)]
+0:zf.paint <- unlist(Descendants(tree, node = zf.edges, type = "children"))
+0:plist <- list(as.paint, zs.paint, am.paint, zm.paint, af.paint, zf.paint)
+0:nvec <- c("AS", "ZS", "AM", "ZM", "AF", "ZF")
+0:for (i in 1:length(plist))
+0:{
+0:tryCatch(
+0:{
+0:tree <- paintBranches(tree, edge = plist[[i]], state = nvec[i])
+0:}, error = function(e)
+0:{
+0:message("Some regimes could not be printed on tree.")
+0:})
+0:}
+0:}
+0:return(tree)
+0:}
+0:maxFast <- function(tree, anc, rate.cat)
+0:{
+0:anc <- copy(anc)
+0:if (rate.cat == 2)
+0:{
+0:anc[, S := rowSums(.SD), .SDcols = c("AS", "ZS")]
+0:anc[, L := rowSums(.SD), .SDcols = c("AF", "ZF")]
+0:anc <- anc[, .(S, L)]
+0:anc[,max :=  names(.SD)[max.col(.SD)]]
+0:s.edges <- unique(tree$edge[,1])[which(anc[, max] == "S")]
+0:s.paint <- unlist(Descendants(tree, node = s.edges, type = "children"))
+0:l.edges <- unique(tree$edge[,1])[which(anc[, max] == "L")]
+0:l.paint <- unlist(Descendants(tree, node = l.edges, type = "children"))
+0:tree <- paintBranches(tree, edge = s.paint, state = "Stable")
+0:tree <- paintBranches(tree, edge = l.paint, state = "Labile")
+0:} else
+0:{
+0:anc[, S := rowSums(.SD), .SDcols = c("AS", "ZM")]
+0:anc[, L := rowSums(.SD), .SDcols = c("ZS", "AM")]
+0:anc[, V := rowSums(.SD), .SDcols = c("AF", "ZF")]
+0:anc <- anc[, .(S, L, V)]
+0:anc[,max :=  names(.SD)[max.col(.SD)]]
+0:s.edges <- unique(tree$edge[,1])[which(anc[, max] == "S")]
+0:s.paint <- unlist(Descendants(tree, node = s.edges, type = "children"))
+0:l.edges <- unique(tree$edge[,1])[which(anc[, max] == "L")]
+0:l.paint <- unlist(Descendants(tree, node = l.edges, type = "children"))
+0:v.edges <- unique(tree$edge[,1])[which(anc[, max] == "V")]
+0:v.paint <- unlist(Descendants(tree, node = v.edges, type = "children"))
+0:tree <- paintBranches(tree, edge = s.paint, state = "Stable")
+0:tree <- paintBranches(tree, edge = l.paint, state = "Labile")
+0:tree <- paintBranches(tree, edge = v.paint, state = "Volatile")
+0:}
+0:return(tree)
+0:}
+0:# Read in tree and traits------------------------------------------------------
+0:stree <- mtree <- read.nexus(here("data/updated_trees_traits/stree_traits",
+0:"stree.trees"))
+0:traits <- fread(here("data/updated_trees_traits/stree_traits",
+0:"stree_traits_B_as_Z.csv"),
+0:header = FALSE, col.names = c("taxa", "state"))
+0:# Format traits and tip labels-------------------------------------------------
+0:# Drop taxa without data from tree
+0:stree <- lapply(stree, drop.tip, tip = traits[state == "-", taxa])
+0:class(stree) <- "multiPhylo"
+0:# Remove taxa with missing data from traits
+0:traits <- traits[state != "-"]
+0:# Sample 100 trees used to estimate rates--------------------------------------
+0:set.seed(1)
+0:stree <- sample(stree, 100, replace = FALSE)
+0:# Read in corHMM runs----------------------------------------------------------
+0:# Read in asr summarized across all 100 trees
+0:f.anc <- readRDS(here("analysis/stree_asr", "stree_subsample_nodeframes.rds"))
+0:# Read in 100 individual asrs
+0:anc3 <- readRDS(here("analysis/stree_asr", "stree_3rate_anc.rds"))
+0:# Plot ancestral state reconstructions-----------------------------------------
+0:# Make consensus tree
+0:ctree <- consensus(stree, p = 0.95)
+0:# Compute banch lengths of ctree for mapping states. The actual branch lengths
+0:# don't matter at this point. They just values or treePaint won't work.
+0:ctree <- compute.brlen(ctree)
+0:### Lengthen some short branches for presentation
+0:# Plot with edge labels to see which to change
+0:plotTree(ctree, ftype = "off", type = "fan")
+0:edgelabels(frame = "n")
+0:# Root
+0:ctree$edge.length[1] <- ctree$edge.length[1] + 0.3
+0:ctree$edge.length[2122] <- ctree$edge.length[2122] + 0.3
+0:### Robusta
+0:ctree$edge.length[1041] <- ctree$edge.length[1041] + 0.01
+0:ctree$edge.length[1040] <- ctree$edge.length[1040] - 0.01
+0:ctree$edge.length[2121] <- ctree$edge.length[2121] + 0.01
+0:ctree$edge.length[1043] <- ctree$edge.length[1043] + 0.01
+0:ctree$edge.length[1042] <- ctree$edge.length[1042] - 0.01
+0:ctree$edge.length[2091] <- ctree$edge.length[2091] + 0.01
+0:ctree$edge.length[1050] <- ctree$edge.length[1050] + 0.01
+0:ctree$edge.length[1049] <- ctree$edge.length[1049] - 0.01
+0:ctree$edge.length[1480] <- ctree$edge.length[1480] + 0.01
+0:ctree$edge.length[1052] <- ctree$edge.length[1052] + 0.01
+0:ctree$edge.length[1051] <- ctree$edge.length[1051] - 0.01
+0:ctree$edge.length[1425] <- ctree$edge.length[1425] + 0.01
+0:ctree$edge.length[1053] <- ctree$edge.length[1053] + 0.005
+0:ctree$edge.length[1052] <- ctree$edge.length[1052] - 0.005
+0:ctree$edge.length[1424] <- ctree$edge.length[1424] + 0.005
+0:ctree$edge.length[1046] <- ctree$edge.length[1046] + 0.005
+0:ctree$edge.length[1045] <- ctree$edge.length[1045] - 0.005
+0:ctree$edge.length[1865] <- ctree$edge.length[1865] + 0.005
+0:ctree$edge.length[1788] <- ctree$edge.length[1788] + 0.01
+0:ctree$edge.length[1787] <- ctree$edge.length[1787] - 0.01
+0:ctree$edge.length[1858] <- ctree$edge.length[1858] + 0.01
+0:### Complexa
+0:ctree$edge.length[3] <- ctree$edge.length[3] + 0.01
+0:ctree$edge.length[2] <- ctree$edge.length[2] - 0.01
+0:ctree$edge.length[1039] <- ctree$edge.length[1039] + 0.01
+0:ctree$edge.length[561] <- ctree$edge.length[561] + 0.01
+0:ctree$edge.length[560] <- ctree$edge.length[560] - 0.01
+0:ctree$edge.length[1036] <- ctree$edge.length[1036] + 0.01
+0:ctree$edge.length[562] <- ctree$edge.length[562] + 0.01
+0:ctree$edge.length[560] <- ctree$edge.length[560] - 0.01
+0:ctree$edge.length[1036] <- ctree$edge.length[1036] + 0.01
+0:ctree$edge.length[1023] <- ctree$edge.length[1023] + 0.01
+0:ctree$edge.length[957] <- ctree$edge.length[957] + 0.01
+0:ctree$edge.length[956] <- ctree$edge.length[956] - 0.01
+0:ctree$edge.length[1016] <- ctree$edge.length[1016] + 0.01
+0:ctree$edge.length[958] <- ctree$edge.length[958] + 0.01
+0:ctree$edge.length[956] <- ctree$edge.length[956] - 0.01
+0:ctree$edge.length[1015] <- ctree$edge.length[1015] + 0.01
+0:ctree$edge.length[1016] <- ctree$edge.length[1016] + 0.01
+0:### Lengthen some short branches for presentation
+0:# Plot with edge labels to see which to change
+0:plotTree(ctree, ftype = "off", type = "fan")
+0:edgelabels(frame = "n")
+0:### Lengthen some short branches for presentation
+0:# Plot with edge labels to see which to change
+0:plotTree(ctree, ftype = "off", type = "fan")
+0:# Make color vectors for plotting combined rate cats
+0:# 1 rate
+0:r1.cols <- c("grey", "#084594", "#E6AB02")
+0:names(r1.cols) <- c(1, "A", "Z")
+0:# Fast categories
+0:# rc.cols <- c("grey", "red")
+0:# names(rc.cols) <- c(1, "F")
+0:fast.cols <- c("#bdbdbd", "#fc9272", "#a50f15")
+0:names(fast.cols) <- c("Stable", "Labile", "Volatile")
+0:# Regular colors for plotting all rate cats
+0:r3.cols <- c("grey", "#084594", "#F781BF", "#1B9E77", "#E6AB02", "#7570B3", "#E41A1C")
+0:names(r3.cols) <- c(1, "AS", "ZS", "AM", "ZM", "AF", "ZF")
+0:# Make vector of trait colors
+0:trait.cols <- traits[, state]
+0:names(trait.cols) <- traits[, taxa]
+0:trait.cols[trait.cols == "A"] <- "#084594"
+0:trait.cols[trait.cols == "Z"] <- "#E6AB02"
+0:### Format f.anc to look like asrs generated from ancRECON so I can use the
+0:### treePaint function I wrote
+0:fanc3 <- f.anc[[3]]
+0:setnames(fanc3, c("AS", "ZS", "AM", "ZM", "AF", "ZF", "ctree.nodes"))
+0:fanc3 <- fanc3[, .(AS = mean(AS), ZS = mean(ZS),
+0:AM = mean(AM), ZM = mean(ZM),
+0:AF = mean(AF), ZF = mean(ZF)),
+0:by = ctree.nodes]
+0:fanc3[, ctree.nodes := NULL]
+0:fanc3 <- list(fanc3)
+0:names(fanc3) <- "lik.anc.states"
+0:### Paint trees with azoox/zoox recons
+0:og3.asr <- azPaint(ctree, anc = fanc3$lik.anc.states, rate.cat = 3)
+0:### Paint summed fast categories on trees
+0:rc3.asr <- maxFast(ctree, fanc3$lik.anc.states, rate.cat = 3)
+0:### Paint trees with rate categories
+0:# 2 rate
+0:f3.asr <- treePaint(tree = ctree, anc = fanc3, rate.cat = 3)
+0:### Paint tree with rate cats based on max p at each node
+0:m3.asr <- maxPaint(tree = ctree, anc = fanc3, rate.cat = 3)
+0:### Paint tree with different cutoff values
+0:f5.asr <- ptreePaint(tree = ctree, anc = fanc3, rate.cat = 3, p = 0.5)
+0:plotSimmap(og3.asr$tree, type = "fan", ftype = "off", r1.cols, lwd = 0.5)
+0:plotSimmap(og3.asr$tree, type = "fan", fsize = 0.3, r1.cols, lwd = 0.5)
+0:nodelabels(pie = as.matrix(og3.asr$nodeprobs), cex = 0.05,
+0:piecol = r1.cols[-1])
+0:plotSimmap(rc3.asr, type = "fan", ftype = "off", fast.cols, lwd = 0.5)
+0:plotSimmap(f3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
+0:plotSimmap(m3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
+0:plotSimmap(rc3.asr, type = "fan", ftype = "off", fast.cols, lwd = 0.5)
+0:plotSimmap(f3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
+0:plotSimmap(m3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
+0:plotSimmap(og3.asr$tree, type = "fan", fsize = 0.3, r1.cols, lwd = 0.5)
+0:plotSimmap(og3.asr$tree, type = "fan", ftype = "off", r1.cols, lwd = 0.5)
+0:# Source helper functions for plotting
+0:source(here("R/plotting_functions.R"))
+0:# Load packages
+0:library(data.table)
+0:library(phytools)
+0:library(phangorn)
+0:library(here)
+0:# Set working directory
+0:setwd(here("analysis/stree_asr"))
+0:# Source helper functions for plotting
+0:source(here("R/plotting_functions.R"))
+0:# Read in tree and traits------------------------------------------------------
+0:stree <- mtree <- read.nexus(here("data/updated_trees_traits/stree_traits",
+0:"stree.trees"))
+0:traits <- fread(here("data/updated_trees_traits/stree_traits",
+0:"stree_traits_B_as_Z.csv"),
+0:header = FALSE, col.names = c("taxa", "state"))
+0:# Format traits and tip labels-------------------------------------------------
+0:# Drop taxa without data from tree
+0:stree <- lapply(stree, drop.tip, tip = traits[state == "-", taxa])
+0:class(stree) <- "multiPhylo"
+0:# Remove taxa with missing data from traits
+0:traits <- traits[state != "-"]
+0:# Sample 100 trees used to estimate rates--------------------------------------
+0:set.seed(1)
+0:stree <- sample(stree, 100, replace = FALSE)
+0:# Read in corHMM runs----------------------------------------------------------
+0:# Read in asr summarized across all 100 trees
+0:f.anc <- readRDS(here("analysis/stree_asr", "stree_subsample_nodeframes.rds"))
+0:# Read in 100 individual asrs
+0:anc3 <- readRDS(here("analysis/stree_asr", "stree_3rate_anc.rds"))
+0:# Plot ancestral state reconstructions-----------------------------------------
+0:# Make consensus tree
+0:ctree <- consensus(stree, p = 0.95)
+0:# Compute banch lengths of ctree for mapping states. The actual branch lengths
+0:# don't matter at this point. They just need values or treePaint won't work.
+0:ctree <- compute.brlen(ctree)
+0:# Root
+0:ctree$edge.length[1] <- ctree$edge.length[1] + 0.3
+0:ctree$edge.length[2122] <- ctree$edge.length[2122] + 0.3
+0:### Robusta
+0:ctree$edge.length[1041] <- ctree$edge.length[1041] + 0.01
+0:ctree$edge.length[1040] <- ctree$edge.length[1040] - 0.01
+0:ctree$edge.length[2121] <- ctree$edge.length[2121] + 0.01
+0:ctree$edge.length[1043] <- ctree$edge.length[1043] + 0.01
+0:ctree$edge.length[1042] <- ctree$edge.length[1042] - 0.01
+0:ctree$edge.length[2091] <- ctree$edge.length[2091] + 0.01
+0:ctree$edge.length[1050] <- ctree$edge.length[1050] + 0.01
+0:ctree$edge.length[1049] <- ctree$edge.length[1049] - 0.01
+0:ctree$edge.length[1480] <- ctree$edge.length[1480] + 0.01
+0:ctree$edge.length[1052] <- ctree$edge.length[1052] + 0.01
+0:ctree$edge.length[1051] <- ctree$edge.length[1051] - 0.01
+0:ctree$edge.length[1425] <- ctree$edge.length[1425] + 0.01
+0:ctree$edge.length[1053] <- ctree$edge.length[1053] + 0.005
+0:ctree$edge.length[1052] <- ctree$edge.length[1052] - 0.005
+0:ctree$edge.length[1424] <- ctree$edge.length[1424] + 0.005
+0:ctree$edge.length[1046] <- ctree$edge.length[1046] + 0.005
+0:ctree$edge.length[1045] <- ctree$edge.length[1045] - 0.005
+0:ctree$edge.length[1865] <- ctree$edge.length[1865] + 0.005
+0:ctree$edge.length[1788] <- ctree$edge.length[1788] + 0.01
+0:ctree$edge.length[1787] <- ctree$edge.length[1787] - 0.01
+0:ctree$edge.length[1858] <- ctree$edge.length[1858] + 0.01
+0:### Complexa
+0:ctree$edge.length[3] <- ctree$edge.length[3] + 0.01
+0:ctree$edge.length[2] <- ctree$edge.length[2] - 0.01
+0:ctree$edge.length[1039] <- ctree$edge.length[1039] + 0.01
+0:ctree$edge.length[561] <- ctree$edge.length[561] + 0.01
+0:ctree$edge.length[560] <- ctree$edge.length[560] - 0.01
+0:ctree$edge.length[1036] <- ctree$edge.length[1036] + 0.01
+0:ctree$edge.length[562] <- ctree$edge.length[562] + 0.01
+0:ctree$edge.length[560] <- ctree$edge.length[560] - 0.01
+0:ctree$edge.length[1036] <- ctree$edge.length[1036] + 0.01
+0:ctree$edge.length[1023] <- ctree$edge.length[1023] + 0.01
+0:ctree$edge.length[957] <- ctree$edge.length[957] + 0.01
+0:ctree$edge.length[956] <- ctree$edge.length[956] - 0.01
+0:ctree$edge.length[1016] <- ctree$edge.length[1016] + 0.01
+0:ctree$edge.length[958] <- ctree$edge.length[958] + 0.01
+0:ctree$edge.length[956] <- ctree$edge.length[956] - 0.01
+0:ctree$edge.length[1015] <- ctree$edge.length[1015] + 0.01
+0:ctree$edge.length[1016] <- ctree$edge.length[1016] + 0.01
+0:# Make color vectors for plotting combined rate cats
+0:# 1 rate
+0:r1.cols <- c("grey", "#084594", "#E6AB02")
+0:names(r1.cols) <- c(1, "A", "Z")
+0:# Fast categories
+0:# rc.cols <- c("grey", "red")
+0:# names(rc.cols) <- c(1, "F")
+0:fast.cols <- c("#bdbdbd", "#fc9272", "#a50f15")
+0:names(fast.cols) <- c("Stable", "Labile", "Volatile")
+0:# Regular colors for plotting all rate cats
+0:r3.cols <- c("grey", "#084594", "#F781BF", "#1B9E77", "#E6AB02", "#7570B3", "#E41A1C")
+0:names(r3.cols) <- c(1, "AS", "ZS", "AM", "ZM", "AF", "ZF")
+0:# Make vector of trait colors
+0:trait.cols <- traits[, state]
+0:names(trait.cols) <- traits[, taxa]
+0:trait.cols[trait.cols == "A"] <- "#084594"
+0:trait.cols[trait.cols == "Z"] <- "#E6AB02"
+0:### Format f.anc to look like asrs generated from ancRECON so I can use the
+0:### treePaint function I wrote
+0:fanc3 <- f.anc[[3]]
+0:setnames(fanc3, c("AS", "ZS", "AM", "ZM", "AF", "ZF", "ctree.nodes"))
+0:fanc3 <- fanc3[, .(AS = mean(AS), ZS = mean(ZS),
+0:AM = mean(AM), ZM = mean(ZM),
+0:AF = mean(AF), ZF = mean(ZF)),
+0:by = ctree.nodes]
+0:fanc3[, ctree.nodes := NULL]
+0:fanc3 <- list(fanc3)
+0:names(fanc3) <- "lik.anc.states"
+0:### Paint trees with rate categories
+0:# 2 rate
+0:f3.asr <- treePaint(tree = ctree, anc = fanc3, rate.cat = 3)
+0:### Paint tree with rate cats based on max p at each node
+0:m3.asr <- maxPaint(tree = ctree, anc = fanc3, rate.cat = 3)
+0:plotSimmap(f3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
+0:plotSimmap(m3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
+0:# Load packages
+0:library(data.table)
+0:library(phytools)
+0:library(phangorn)
+0:library(here)
+0:# Set working directory
+0:setwd(here("analysis/stree_asr"))
+0:# Source helper functions for plotting
+0:source(here("R/plotting_functions.R"))
+0:# Read in tree and traits------------------------------------------------------
+0:stree <- mtree <- read.nexus(here("data/updated_trees_traits/stree_traits",
+0:"stree.trees"))
+0:traits <- fread(here("data/updated_trees_traits/stree_traits",
+0:"stree_traits_B_as_Z.csv"),
+0:header = FALSE, col.names = c("taxa", "state"))
+0:# Format traits and tip labels-------------------------------------------------
+0:# Drop taxa without data from tree
+0:stree <- lapply(stree, drop.tip, tip = traits[state == "-", taxa])
+0:class(stree) <- "multiPhylo"
+0:# Remove taxa with missing data from traits
+0:traits <- traits[state != "-"]
+0:# Sample 100 trees used to estimate rates--------------------------------------
+0:set.seed(1)
+0:stree <- sample(stree, 100, replace = FALSE)
+0:# Read in corHMM runs----------------------------------------------------------
+0:# Read in asr summarized across all 100 trees
+0:f.anc <- readRDS(here("analysis/stree_asr", "stree_subsample_nodeframes.rds"))
+0:# Read in 100 individual asrs
+0:anc3 <- readRDS(here("analysis/stree_asr", "stree_3rate_anc.rds"))
+0:# Plot ancestral state reconstructions-----------------------------------------
+0:# Make consensus tree
+0:ctree <- consensus(stree, p = 0.95)
+0:# Compute banch lengths of ctree for mapping states. The actual branch lengths
+0:# don't matter at this point. They just need values or treePaint won't work.
+0:ctree <- compute.brlen(ctree)
+0:# Root
+0:ctree$edge.length[1] <- ctree$edge.length[1] + 0.3
+0:ctree$edge.length[2122] <- ctree$edge.length[2122] + 0.3
+0:### Robusta
+0:ctree$edge.length[1041] <- ctree$edge.length[1041] + 0.01
+0:ctree$edge.length[1040] <- ctree$edge.length[1040] - 0.01
+0:ctree$edge.length[2121] <- ctree$edge.length[2121] + 0.01
+0:ctree$edge.length[1043] <- ctree$edge.length[1043] + 0.01
+0:ctree$edge.length[1042] <- ctree$edge.length[1042] - 0.01
+0:ctree$edge.length[2091] <- ctree$edge.length[2091] + 0.01
+0:ctree$edge.length[1050] <- ctree$edge.length[1050] + 0.01
+0:ctree$edge.length[1049] <- ctree$edge.length[1049] - 0.01
+0:ctree$edge.length[1480] <- ctree$edge.length[1480] + 0.01
+0:ctree$edge.length[1052] <- ctree$edge.length[1052] + 0.01
+0:ctree$edge.length[1051] <- ctree$edge.length[1051] - 0.01
+0:ctree$edge.length[1425] <- ctree$edge.length[1425] + 0.01
+0:ctree$edge.length[1053] <- ctree$edge.length[1053] + 0.005
+0:ctree$edge.length[1052] <- ctree$edge.length[1052] - 0.005
+0:ctree$edge.length[1424] <- ctree$edge.length[1424] + 0.005
+0:ctree$edge.length[1046] <- ctree$edge.length[1046] + 0.005
+0:ctree$edge.length[1045] <- ctree$edge.length[1045] - 0.005
+0:ctree$edge.length[1865] <- ctree$edge.length[1865] + 0.005
+0:ctree$edge.length[1788] <- ctree$edge.length[1788] + 0.01
+0:ctree$edge.length[1787] <- ctree$edge.length[1787] - 0.01
+0:ctree$edge.length[1858] <- ctree$edge.length[1858] + 0.01
+0:### Complexa
+0:ctree$edge.length[3] <- ctree$edge.length[3] + 0.01
+0:ctree$edge.length[2] <- ctree$edge.length[2] - 0.01
+0:ctree$edge.length[1039] <- ctree$edge.length[1039] + 0.01
+0:ctree$edge.length[561] <- ctree$edge.length[561] + 0.01
+0:ctree$edge.length[560] <- ctree$edge.length[560] - 0.01
+0:ctree$edge.length[1036] <- ctree$edge.length[1036] + 0.01
+0:ctree$edge.length[562] <- ctree$edge.length[562] + 0.01
+0:ctree$edge.length[560] <- ctree$edge.length[560] - 0.01
+0:ctree$edge.length[1036] <- ctree$edge.length[1036] + 0.01
+0:ctree$edge.length[1023] <- ctree$edge.length[1023] + 0.01
+0:ctree$edge.length[957] <- ctree$edge.length[957] + 0.01
+0:ctree$edge.length[956] <- ctree$edge.length[956] - 0.01
+0:ctree$edge.length[1016] <- ctree$edge.length[1016] + 0.01
+0:ctree$edge.length[958] <- ctree$edge.length[958] + 0.01
+0:ctree$edge.length[956] <- ctree$edge.length[956] - 0.01
+0:ctree$edge.length[1015] <- ctree$edge.length[1015] + 0.01
+0:ctree$edge.length[1016] <- ctree$edge.length[1016] + 0.01
+0:# Format f.anc to look like asrs generated from ancRECON for use with
+0:# ploting functions
+0:fanc3 <- f.anc[[3]]
+0:setnames(fanc3, c("AS", "ZS", "AM", "ZM", "AF", "ZF", "ctree.nodes"))
+0:fanc3 <- fanc3[, .(AS = mean(AS), ZS = mean(ZS),
+0:AM = mean(AM), ZM = mean(ZM),
+0:AF = mean(AF), ZF = mean(ZF)),
+0:by = ctree.nodes]
+0:fanc3[, ctree.nodes := NULL]
+0:fanc3 <- list(fanc3)
+0:names(fanc3) <- "lik.anc.states"
+0:# Based on probability cutoff at nodes
+0:f3.asr <- treePaint(tree = ctree, anc = fanc3, rate.cat = 3)
+0:# Based on maximum probability at nodes
+0:### Paint tree with rate cats based on max p at each node
+0:m3.asr <- maxPaint(tree = ctree, anc = fanc3, rate.cat = 3)
+0:# Define colors for plotting
+0:r3.cols <- c("grey", "#084594", "#F781BF", "#1B9E77",
+0:"#E6AB02", "#7570B3", "#E41A1C")
+0:names(r3.cols) <- c(1, "AS", "ZS", "AM", "ZM", "AF", "ZF")
+0:plotSimmap(f3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
+0:# Load packages
+0:library(data.table)
+0:library(phytools)
+0:library(phangorn)
+0:library(here)
+0:# Set working directory
+0:setwd(here("analysis/stree_asr"))
+0:# Source helper functions for plotting
+0:source(here("R/plotting_functions.R"))
+0:# Read in tree and traits------------------------------------------------------
+0:stree <- mtree <- read.nexus(here("data/updated_trees_traits/stree_traits",
+0:"stree.trees"))
+0:traits <- fread(here("data/updated_trees_traits/stree_traits",
+0:"stree_traits_B_as_Z.csv"),
+0:header = FALSE, col.names = c("taxa", "state"))
+0:# Format traits and tip labels-------------------------------------------------
+0:# Drop taxa without data from tree
+0:stree <- lapply(stree, drop.tip, tip = traits[state == "-", taxa])
+0:class(stree) <- "multiPhylo"
+0:# Remove taxa with missing data from traits
+0:traits <- traits[state != "-"]
+0:# Sample 100 trees used to estimate rates--------------------------------------
+0:set.seed(1)
+0:stree <- sample(stree, 100, replace = FALSE)
+0:# Read in corHMM runs----------------------------------------------------------
+0:# Read in asr summarized across all 100 trees
+0:f.anc <- readRDS(here("analysis/stree_asr", "stree_subsample_nodeframes.rds"))
+0:# Read in 100 individual asrs
+0:anc3 <- readRDS(here("analysis/stree_asr", "stree_3rate_anc.rds"))
+0:# Plot ancestral state reconstructions-----------------------------------------
+0:# Make consensus tree
+0:ctree <- consensus(stree, p = 0.95)
+0:# Compute banch lengths of ctree for mapping states. The actual branch lengths
+0:# don't matter at this point. They just need values or treePaint won't work.
+0:ctree <- compute.brlen(ctree)
+0:### Lengthen some short branches for presentation
+0:# Plot with edge labels to see which to change
+0:# plotTree(ctree, ftype = "off", type = "fan")
+0:# edgelabels(frame = "n")
+0:# Root
+0:ctree$edge.length[1] <- ctree$edge.length[1] + 0.3
+0:ctree$edge.length[2122] <- ctree$edge.length[2122] + 0.3
+0:### Robusta
+0:ctree$edge.length[1041] <- ctree$edge.length[1041] + 0.01
+0:ctree$edge.length[1040] <- ctree$edge.length[1040] - 0.01
+0:ctree$edge.length[2121] <- ctree$edge.length[2121] + 0.01
+0:ctree$edge.length[1043] <- ctree$edge.length[1043] + 0.01
+0:ctree$edge.length[1042] <- ctree$edge.length[1042] - 0.01
+0:ctree$edge.length[2091] <- ctree$edge.length[2091] + 0.01
+0:ctree$edge.length[1050] <- ctree$edge.length[1050] + 0.01
+0:ctree$edge.length[1049] <- ctree$edge.length[1049] - 0.01
+0:ctree$edge.length[1480] <- ctree$edge.length[1480] + 0.01
+0:ctree$edge.length[1052] <- ctree$edge.length[1052] + 0.01
+0:ctree$edge.length[1051] <- ctree$edge.length[1051] - 0.01
+0:ctree$edge.length[1425] <- ctree$edge.length[1425] + 0.01
+0:ctree$edge.length[1053] <- ctree$edge.length[1053] + 0.005
+0:ctree$edge.length[1052] <- ctree$edge.length[1052] - 0.005
+0:ctree$edge.length[1424] <- ctree$edge.length[1424] + 0.005
+0:ctree$edge.length[1046] <- ctree$edge.length[1046] + 0.005
+0:ctree$edge.length[1045] <- ctree$edge.length[1045] - 0.005
+0:ctree$edge.length[1865] <- ctree$edge.length[1865] + 0.005
+0:ctree$edge.length[1788] <- ctree$edge.length[1788] + 0.01
+0:ctree$edge.length[1787] <- ctree$edge.length[1787] - 0.01
+0:ctree$edge.length[1858] <- ctree$edge.length[1858] + 0.01
+0:### Complexa
+0:ctree$edge.length[3] <- ctree$edge.length[3] + 0.01
+0:ctree$edge.length[2] <- ctree$edge.length[2] - 0.01
+0:ctree$edge.length[1039] <- ctree$edge.length[1039] + 0.01
+0:ctree$edge.length[561] <- ctree$edge.length[561] + 0.01
+0:ctree$edge.length[560] <- ctree$edge.length[560] - 0.01
+0:ctree$edge.length[1036] <- ctree$edge.length[1036] + 0.01
+0:ctree$edge.length[562] <- ctree$edge.length[562] + 0.01
+0:ctree$edge.length[560] <- ctree$edge.length[560] - 0.01
+0:ctree$edge.length[1036] <- ctree$edge.length[1036] + 0.01
+0:ctree$edge.length[1023] <- ctree$edge.length[1023] + 0.01
+0:ctree$edge.length[957] <- ctree$edge.length[957] + 0.01
+0:ctree$edge.length[956] <- ctree$edge.length[956] - 0.01
+0:ctree$edge.length[1016] <- ctree$edge.length[1016] + 0.01
+0:ctree$edge.length[958] <- ctree$edge.length[958] + 0.01
+0:ctree$edge.length[956] <- ctree$edge.length[956] - 0.01
+0:ctree$edge.length[1015] <- ctree$edge.length[1015] + 0.01
+0:ctree$edge.length[1016] <- ctree$edge.length[1016] + 0.01
+0:# Format f.anc to look like asrs generated from ancRECON for use with
+0:# ploting functions
+0:fanc3 <- f.anc[[3]]
+0:setnames(fanc3, c("AS", "ZS", "AM", "ZM", "AF", "ZF", "ctree.nodes"))
+0:fanc3 <- fanc3[, .(AS = mean(AS), ZS = mean(ZS),
+0:AM = mean(AM), ZM = mean(ZM),
+0:AF = mean(AF), ZF = mean(ZF)),
+0:by = ctree.nodes]
+0:fanc3[, ctree.nodes := NULL]
+0:fanc3 <- list(fanc3)
+0:names(fanc3) <- "lik.anc.states"
+0:# Based on probability cutoff at nodes
+0:f3.asr <- treePaint(tree = ctree, anc = fanc3, rate.cat = 3)
+0:# Based on maximum probability at nodes
+0:### Paint tree with rate cats based on max p at each node
+0:m3.asr <- maxPaint(tree = ctree, anc = fanc3, rate.cat = 3)
+0:# Define colors for plotting
+0:r3.cols <- c("grey", "#084594", "#F781BF", "#1B9E77",
+0:"#E6AB02", "#7570B3", "#E41A1C")
+0:names(r3.cols) <- c(1, "AS", "ZS", "AM", "ZM", "AF", "ZF")
+0:plotSimmap(f3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
+0:plotSimmap(m3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
+1613046236903:# Load packages
+1613046236903:library(data.table)
+1613046238397:library(phytools)
+1613046239792:library(phangorn)
+1613046240920:library(here)
+1613046244147:# Set working directory
+1613046244156:setwd(here("analysis/stree_asr"))
+1613046250769:# Source helper functions for plotting
+1613046250778:source(here("R/plotting_functions.R"))
+1613046258971:# Read in tree and traits------------------------------------------------------
+1613046258980:stree <- mtree <- read.nexus(here("data/updated_trees_traits/stree_traits",
+1613046258981:"stree.trees"))
+1613046270649:traits <- fread(here("data/updated_trees_traits/stree_traits",
+1613046270649:"stree_traits_B_as_Z.csv"),
+1613046270649:header = FALSE, col.names = c("taxa", "state"))
+1613046276757:# Format traits and tip labels-------------------------------------------------
+1613046276758:# Drop taxa without data from tree
+1613046276758:stree <- lapply(stree, drop.tip, tip = traits[state == "-", taxa])
+1613046278577:class(stree) <- "multiPhylo"
+1613046280534:# Remove taxa with missing data from traits
+1613046280543:traits <- traits[state != "-"]
+1613046283075:# Sample 100 trees used to estimate rates--------------------------------------
+1613046283076:set.seed(1)
+1613046284408:stree <- sample(stree, 100, replace = FALSE)
+1613046286634:# Read in corHMM runs----------------------------------------------------------
+1613046286635:# Read in asr summarized across all 100 trees
+1613046286635:f.anc <- readRDS(here("analysis/stree_asr", "stree_subsample_nodeframes.rds"))
+1613046287406:# Read in 100 individual asrs
+1613046287406:anc3 <- readRDS(here("analysis/stree_asr", "stree_3rate_anc.rds"))
+1613046289074:# Make consensus tree
+1613046289074:ctree <- consensus(stree, p = 0.95)
+1613046295580:# Compute branch lengths of ctree for mapping states. The actual branch lengths
+1613046295581:# don't matter. They just need values for helper functions to work.
+1613046295581:ctree <- compute.brlen(ctree)
+1613046298925:# Root
+1613046298925:ctree$edge.length[1] <- ctree$edge.length[1] + 0.3
+1613046298925:ctree$edge.length[2122] <- ctree$edge.length[2122] + 0.3
+1613046298926:### Robusta
+1613046298926:ctree$edge.length[1041] <- ctree$edge.length[1041] + 0.01
+1613046298927:ctree$edge.length[1040] <- ctree$edge.length[1040] - 0.01
+1613046298927:ctree$edge.length[2121] <- ctree$edge.length[2121] + 0.01
+1613046298928:ctree$edge.length[1043] <- ctree$edge.length[1043] + 0.01
+1613046298928:ctree$edge.length[1042] <- ctree$edge.length[1042] - 0.01
+1613046298929:ctree$edge.length[2091] <- ctree$edge.length[2091] + 0.01
+1613046298929:ctree$edge.length[1050] <- ctree$edge.length[1050] + 0.01
+1613046298929:ctree$edge.length[1049] <- ctree$edge.length[1049] - 0.01
+1613046298930:ctree$edge.length[1480] <- ctree$edge.length[1480] + 0.01
+1613046298930:ctree$edge.length[1052] <- ctree$edge.length[1052] + 0.01
+1613046298930:ctree$edge.length[1051] <- ctree$edge.length[1051] - 0.01
+1613046298931:ctree$edge.length[1425] <- ctree$edge.length[1425] + 0.01
+1613046298931:ctree$edge.length[1053] <- ctree$edge.length[1053] + 0.005
+1613046298932:ctree$edge.length[1052] <- ctree$edge.length[1052] - 0.005
+1613046298932:ctree$edge.length[1424] <- ctree$edge.length[1424] + 0.005
+1613046298932:ctree$edge.length[1046] <- ctree$edge.length[1046] + 0.005
+1613046298933:ctree$edge.length[1045] <- ctree$edge.length[1045] - 0.005
+1613046298933:ctree$edge.length[1865] <- ctree$edge.length[1865] + 0.005
+1613046298934:ctree$edge.length[1788] <- ctree$edge.length[1788] + 0.01
+1613046298934:ctree$edge.length[1787] <- ctree$edge.length[1787] - 0.01
+1613046298934:ctree$edge.length[1858] <- ctree$edge.length[1858] + 0.01
+1613046298935:### Complexa
+1613046298935:ctree$edge.length[3] <- ctree$edge.length[3] + 0.01
+1613046298935:ctree$edge.length[2] <- ctree$edge.length[2] - 0.01
+1613046298936:ctree$edge.length[1039] <- ctree$edge.length[1039] + 0.01
+1613046298937:ctree$edge.length[561] <- ctree$edge.length[561] + 0.01
+1613046298938:ctree$edge.length[560] <- ctree$edge.length[560] - 0.01
+1613046298938:ctree$edge.length[1036] <- ctree$edge.length[1036] + 0.01
+1613046298939:ctree$edge.length[562] <- ctree$edge.length[562] + 0.01
+1613046298939:ctree$edge.length[560] <- ctree$edge.length[560] - 0.01
+1613046298939:ctree$edge.length[1036] <- ctree$edge.length[1036] + 0.01
+1613046298940:ctree$edge.length[1023] <- ctree$edge.length[1023] + 0.01
+1613046298940:ctree$edge.length[957] <- ctree$edge.length[957] + 0.01
+1613046298940:ctree$edge.length[956] <- ctree$edge.length[956] - 0.01
+1613046298941:ctree$edge.length[1016] <- ctree$edge.length[1016] + 0.01
+1613046298941:ctree$edge.length[958] <- ctree$edge.length[958] + 0.01
+1613046298941:ctree$edge.length[956] <- ctree$edge.length[956] - 0.01
+1613046298942:ctree$edge.length[1015] <- ctree$edge.length[1015] + 0.01
+1613046298942:ctree$edge.length[1016] <- ctree$edge.length[1016] + 0.01
+1613046302302:# Format f.anc to look like asrs generated from ancRECON for use with
+1613046302302:# ploting functions
+1613046302302:fanc3 <- f.anc[[3]]
+1613046303234:setnames(fanc3, c("AS", "ZS", "AM", "ZM", "AF", "ZF", "ctree.nodes"))
+1613046303826:fanc3 <- fanc3[, .(AS = mean(AS), ZS = mean(ZS),
+1613046303827:AM = mean(AM), ZM = mean(ZM),
+1613046303828:AF = mean(AF), ZF = mean(ZF)),
+1613046303828:by = ctree.nodes]
+1613046304319:fanc3[, ctree.nodes := NULL]
+1613046304706:fanc3 <- list(fanc3)
+1613046305005:names(fanc3) <- "lik.anc.states"
+1613046309830:# Based on probability cutoff at nodes
+1613046309839:f3.asr <- treePaint(tree = ctree, anc = fanc3, rate.cat = 3)
+1613046310704:# Based on maximum probability at nodes
+1613046310704:m3.asr <- maxPaint(tree = ctree, anc = fanc3, rate.cat = 3)
+1613046313729:# Define colors for plotting
+1613046313738:r3.cols <- c("grey", "#084594", "#F781BF", "#1B9E77",
+1613046313738:"#E6AB02", "#7570B3", "#E41A1C")
+1613046314271:names(r3.cols) <- c(1, "AS", "ZS", "AM", "ZM", "AF", "ZF")
+1613046317114:plotSimmap(m3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
+1613046333232:plotSimmap(m3.asr, type = "fan", fsize = 0.3, r3.cols, lwd = 1)
+1613046343806:plotSimmap(m3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
+1613046680651:# Load packages
+1613046680660:library(data.table)
+1613046681146:library(phytools)
+1613046682566:library(phangorn)
+1613046682879:library(here)
+1613046685069:# Set working directory
+1613046685069:setwd(here("analysis/stree_asr"))
+1613046685805:# Source helper functions for plotting
+1613046685806:source(here("R/plotting_functions.R"))
+1613046687756:# Read in tree and traits------------------------------------------------------
+1613046687756:stree <- mtree <- read.nexus(here("data/updated_trees_traits/stree_traits",
+1613046687757:"stree.trees"))
+1613046696284:traits <- fread(here("data/updated_trees_traits/stree_traits",
+1613046696284:"stree_traits_B_as_Z.csv"),
+1613046696284:header = FALSE, col.names = c("taxa", "state"))
+1613046699280:# Format traits and tip labels-------------------------------------------------
+1613046699315:# Drop taxa without data from tree
+1613046699315:stree <- lapply(stree, drop.tip, tip = traits[state == "-", taxa])
+1613046701123:class(stree) <- "multiPhylo"
+1613046702166:# Remove taxa with missing data from traits
+1613046702175:traits <- traits[state != "-"]
+1613046704458:# Sample 100 trees used to estimate rates--------------------------------------
+1613046704459:set.seed(1)
+1613046705038:stree <- sample(stree, 100, replace = FALSE)
+1613046706717:# Read in corHMM runs----------------------------------------------------------
+1613046706718:# Read in asr summarized across all 100 trees
+1613046706718:f.anc <- readRDS(here("analysis/stree_asr", "stree_subsample_nodeframes.rds"))
+1613046707273:# Read in 100 individual asrs
+1613046707273:anc3 <- readRDS(here("analysis/stree_asr", "stree_3rate_anc.rds"))
+1613046715063:# Make consensus tree
+1613046715072:ctree <- consensus(stree, p = 0.95)
+1613046721161:# Compute branch lengths of ctree for mapping states. The actual branch lengths
+1613046721161:# don't matter. They just need values for helper functions to work.
+1613046721161:ctree <- compute.brlen(ctree)
+1613046724424:# Root
+1613046724424:ctree$edge.length[1] <- ctree$edge.length[1] + 0.3
+1613046725357:ctree$edge.length[2122] <- ctree$edge.length[2122] + 0.3
+1613046733789:### Robusta
+1613046733790:ctree$edge.length[1041] <- ctree$edge.length[1041] + 0.01
+1613046733790:ctree$edge.length[1040] <- ctree$edge.length[1040] - 0.01
+1613046733791:ctree$edge.length[2121] <- ctree$edge.length[2121] + 0.01
+1613046733791:ctree$edge.length[1043] <- ctree$edge.length[1043] + 0.01
+1613046733791:ctree$edge.length[1042] <- ctree$edge.length[1042] - 0.01
+1613046733792:ctree$edge.length[2091] <- ctree$edge.length[2091] + 0.01
+1613046733792:ctree$edge.length[1050] <- ctree$edge.length[1050] + 0.01
+1613046733792:ctree$edge.length[1049] <- ctree$edge.length[1049] - 0.01
+1613046733793:ctree$edge.length[1480] <- ctree$edge.length[1480] + 0.01
+1613046733793:ctree$edge.length[1052] <- ctree$edge.length[1052] + 0.01
+1613046733794:ctree$edge.length[1051] <- ctree$edge.length[1051] - 0.01
+1613046733794:ctree$edge.length[1425] <- ctree$edge.length[1425] + 0.01
+1613046733795:ctree$edge.length[1053] <- ctree$edge.length[1053] + 0.005
+1613046733795:ctree$edge.length[1052] <- ctree$edge.length[1052] - 0.005
+1613046733796:ctree$edge.length[1424] <- ctree$edge.length[1424] + 0.005
+1613046733796:ctree$edge.length[1046] <- ctree$edge.length[1046] + 0.005
+1613046733796:ctree$edge.length[1045] <- ctree$edge.length[1045] - 0.005
+1613046733797:ctree$edge.length[1865] <- ctree$edge.length[1865] + 0.005
+1613046733797:ctree$edge.length[1788] <- ctree$edge.length[1788] + 0.01
+1613046733797:ctree$edge.length[1787] <- ctree$edge.length[1787] - 0.01
+1613046733798:ctree$edge.length[1858] <- ctree$edge.length[1858] + 0.01
+1613046733798:### Complexa
+1613046733799:ctree$edge.length[3] <- ctree$edge.length[3] + 0.01
+1613046733799:ctree$edge.length[2] <- ctree$edge.length[2] - 0.01
+1613046733799:ctree$edge.length[1039] <- ctree$edge.length[1039] + 0.01
+1613046733800:ctree$edge.length[561] <- ctree$edge.length[561] + 0.01
+1613046733800:ctree$edge.length[560] <- ctree$edge.length[560] - 0.01
+1613046733800:ctree$edge.length[1036] <- ctree$edge.length[1036] + 0.01
+1613046733801:ctree$edge.length[562] <- ctree$edge.length[562] + 0.01
+1613046733801:ctree$edge.length[560] <- ctree$edge.length[560] - 0.01
+1613046733801:ctree$edge.length[1036] <- ctree$edge.length[1036] + 0.01
+1613046733801:ctree$edge.length[1023] <- ctree$edge.length[1023] + 0.01
+1613046733802:ctree$edge.length[957] <- ctree$edge.length[957] + 0.01
+1613046733802:ctree$edge.length[956] <- ctree$edge.length[956] - 0.01
+1613046733802:ctree$edge.length[1016] <- ctree$edge.length[1016] + 0.01
+1613046733803:ctree$edge.length[958] <- ctree$edge.length[958] + 0.01
+1613046733803:ctree$edge.length[956] <- ctree$edge.length[956] - 0.01
+1613046733803:ctree$edge.length[1015] <- ctree$edge.length[1015] + 0.01
+1613046733804:ctree$edge.length[1016] <- ctree$edge.length[1016] + 0.01
+1613046738741:# Format f.anc to look like asrs generated from ancRECON for use with
+1613046738750:# ploting functions
+1613046738751:fanc3 <- f.anc[[3]]
+1613046739663:setnames(fanc3, c("AS", "ZS", "AM", "ZM", "AF", "ZF", "ctree.nodes"))
+1613046740089:fanc3 <- fanc3[, .(AS = mean(AS), ZS = mean(ZS),
+1613046740089:AM = mean(AM), ZM = mean(ZM),
+1613046740090:AF = mean(AF), ZF = mean(ZF)),
+1613046740090:by = ctree.nodes]
+1613046740597:fanc3[, ctree.nodes := NULL]
+1613046741007:fanc3 <- list(fanc3)
+1613046741401:names(fanc3) <- "lik.anc.states"
+1613046743822:# Based on probability cutoff at nodes
+1613046743831:f3.asr <- treePaint(tree = ctree, anc = fanc3, rate.cat = 3)
+1613046745157:# Based on maximum probability at nodes
+1613046745157:m3.asr <- maxPaint(tree = ctree, anc = fanc3, rate.cat = 3)
+1613046747892:# Define colors for plotting
+1613046747892:r3.cols <- c("grey", "#084594", "#F781BF", "#1B9E77",
+1613046747892:"#E6AB02", "#7570B3", "#E41A1C")
+1613046748479:names(r3.cols) <- c(1, "AS", "ZS", "AM", "ZM", "AF", "ZF")
+1613046750326:plotSimmap(m3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
+1613046755628:plotSimmap(m3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
+1613046768187:plotSimmap(m3.asr, type = "fan", fsize = 0.3, r3.cols, lwd = 1)
+1613046775605:# Plot based on maximum probability at nodes
+1613046775614:pdf(file = "stree_consensus_asr.pdf", width = 5, height = 5)
+1613046776500:plotSimmap(m3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
+1613046777581:dev.off()
+1613046828988:# Set working directory
+1613046828997:setwd(here("figures/stree"))
+1613046847109:# Plot based on maximum probability at nodes
+1613046847110:pdf(file = "stree_consensus_asr.pdf", width = 5, height = 5)
+1613046847112:plotSimmap(m3.asr, type = "fan", ftype = "off", r3.cols, lwd = 0.5)
+1613046848459:dev.off()
+1613046853285:# Plot large figure with tip labels and pie charts at nodes
+1613046853286:pdf(file = "stree_consensus_asr_tiplabels.pdf", width = 60.84, height = 40.63)
+1613046853287:plotSimmap(m3.asr, type = "fan", fsize = 0.3, r3.cols, lwd = 1)
+1613046854436:nodelabels(pie = as.matrix(fanc3$lik.anc.states), cex = 0.05,
+1613046854437:piecol = r3.cols[-1])
+1613046854896:tiplabels(pch = 19, cex = 0.5, col = trait.cols[ctree$tip.label])
+1613046854928:dev.off()
+1613046984330:# Make vector of trait colors for tips
+1613046984339:trait.cols <- traits[, state]
+1613046984843:names(trait.cols) <- traits[, taxa]
+1613046985433:trait.cols[trait.cols == "A"] <- "#084594"
+1613046985770:trait.cols[trait.cols == "Z"] <- "#E6AB02"
+1613046991074:# Plot large figure with tip labels and pie charts at nodes
+1613046991074:pdf(file = "stree_consensus_asr_tiplabels.pdf", width = 60.84, height = 40.63)
+1613046991076:plotSimmap(m3.asr, type = "fan", fsize = 0.3, r3.cols, lwd = 1)
+1613046992204:nodelabels(pie = as.matrix(fanc3$lik.anc.states), cex = 0.05,
+1613046992204:piecol = r3.cols[-1])
+1613046992656:tiplabels(pch = 19, cex = 0.5, col = trait.cols[ctree$tip.label])
+1613046992674:dev.off()
+1613046998654:# Format asr's for plotting function
+1613046998655:anc3 <- lapply(anc3, "[[", "lik.anc.states")
+1613047000142:anc3 <- lapply(anc3, data.table)
+1613047002249:anc3 <- lapply(anc3, setnames, c("AS", "ZS", "AM", "ZM", "AF", "ZF"))
+1613047004105:names(anc3) <- rep("lik.anc.states", length(anc3))
+1613047006854:# Paint all 100 trees
+1613047006854:all.paint <- list()
+1613047008054:for (i in 1:length(stree)){
+1613047008054:all.paint[[i]] <- maxPaint(stree[[i]], anc3[i], rate.cat = 3)
+1613047008054:}
+1613047152137:# Save as a pdf
+1613047152147:vec <- c(1:100)
+1613047152147:pdf(file = "stree_individual_asr.pdf", width = 50, height = 50)
+1613047152149:layout(matrix(1:100, 5, 20, byrow = TRUE))
+1613047152149:for(i in 1:length(all.paint)){
+1613047152150:plotSimmap(all.paint[[i]], ftype = "off", r3.cols, mar = c(0.1, 0.1, 1.5, 0.1))
+1613047152150:mtext(vec[i])
+1613047152150:}
+1613047194036:dev.off()

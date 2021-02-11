@@ -1,0 +1,8 @@
+{
+    "context_id": "DA79F001",
+    "theme": {
+        "name": "Dracula",
+        "url": "theme/default/dracula.rstheme",
+        "isDark": true
+    }
+}
