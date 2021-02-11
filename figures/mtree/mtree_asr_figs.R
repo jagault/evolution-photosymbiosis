@@ -42,8 +42,7 @@ stree <- sample(stree, 100, replace = FALSE)
 
 # Read in corHMM runs----------------------------------------------------------
 # Read in asr summarized across all 100 trees
-f.anc <- readRDS("~/zoox/results/2019-04-05/mtree_subsample_nodeframes.rds")
-
+f.anc <- readRDS(here("analysis/mtree_asr", "mtree_subsample_nodeframes.rds"))
 
 
 # Rotate clades in mtree to match stree----------------------------------------
@@ -97,8 +96,8 @@ ctree <- drop.tip(ctree, "Anthemiphyllia_patera")
 
 # Lengthen branches for presentation-------------------------------------------
 
-plotTree(ctree, ftype = "off", type = "fan")
-edgelabels(frame = "n")
+# plotTree(ctree, ftype = "off", type = "fan")
+# edgelabels(frame = "n")
 
 # Root
 ctree$edge.length[1] <- ctree$edge.length[1] + 0.3
