@@ -1,14 +1,13 @@
-FROM rocker/rstudio:4.0.3
+FROM rocker/rstudio:3.5.3
 
 RUN apt-get update && apt-get install -y \
-    libxml2 \
-    libglpk-dev
-    
+    libmagick++-dev \
+    libmpfr-dev
 
 RUN install2.r \
     data.table \
-    phytools \
     phangorn \
-    corHMM \
     parallel \
-    here
+    here \
+    phytools \
+    corHMM
