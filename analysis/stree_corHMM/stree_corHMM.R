@@ -3,6 +3,7 @@ library(phytools)
 library(data.table)
 library(phangorn)
 library(corHMM)
+library(here)
 
 # Set working directory
 setwd(here("analysis/stree_corHMM"))
