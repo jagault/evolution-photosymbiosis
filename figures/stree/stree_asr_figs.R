@@ -131,9 +131,6 @@ names(fanc3) <- "lik.anc.states"
 
 ### Paint trees with rate categories-------------------------------------------
 
-# Based on probability cutoff at nodes
-f3.asr <- treePaint(tree = ctree, anc = fanc3, rate.cat = 3)
-
 # Based on maximum probability at nodes
 m3.asr <- maxPaint(tree = ctree, anc = fanc3, rate.cat = 3)
 
