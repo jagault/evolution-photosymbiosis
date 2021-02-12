@@ -4,19 +4,19 @@ This repo contains data and scripts necessary to replicate the results from our 
 
 ### Running analysis in Docker container  
 
-The Dockerfile contains instructions to build an image with Rstudio with R version 4.0.3. All packages and libraries necessary for the analysis are included in the image. The image can be downloaded directly from Dockerhub or built from the Dockerfile. 
+The Dockerfile contains instructions to build an image with Rstudio with R version 3.5.3. All packages and libraries necessary for the analysis are included in the image. The image can be downloaded directly from Dockerhub or built from the Dockerfile. 
 
 Pull the image directly from Dockerhub via the following:
 
-`docker pull jagault/evolution-photosymbiosis`
+`docker pull jagault/evolution-photosymbiosis:rstudiov3.5.3`
 
 Or build the image via the following:
 
-`docker build -t jagault/evolution-photosymbiosis .`  
+`docker build -t jagault/evolution-photosymbiosis:rstudiov3.5.3 .`  
 
 Once the image is built, it can be run via the following command:
 
-`docker run -d -p 8787:8787 -v /path/to/repo:/home/rstudio -e PASSWORD=yourpasswordhere jagault/evolution-photosymbiosis`  
+`docker run -d -p 8787:8787 -v /path/to/repo:/home/rstudio -e PASSWORD=yourpasswordhere jagault/evolution-photosymbiosis:rstudiov3.5.3`  
 
 The use of `-d` makes the container run in the background. `-p 8787:8787` opens a port through which rstudio can be accessed through an internet browser. On a linux machine, rstudio can be accessed via `http://localhost:8787`.  
 
