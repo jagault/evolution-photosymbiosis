@@ -39,18 +39,18 @@ tframe <- data.table(tframe, keep.rownames = TRUE)
 
 b1 <- system.time(
   stree_1rate <- corHMM(stree[[1]], data = tframe[, .(rn, Z)], rate.cat = 1,
-                        node.states = "none", nstarts = 0,
+                        node.states = "none", nstarts = 1,
                         n.cores = 1)
 )
 
 b2 <- system.time(
   stree_2rate <- corHMM(stree[[1]], data = tframe[, .(rn, Z)], rate.cat = 2,
-                        node.states = "none", nstarts = 0,
+                        node.states = "none", nstarts = 1,
                         n.cores = 1)
 )
 
 b3 <- system.time(
   stree_3rate <- corHMM(stree[[1]], data = tframe[, .(rn, Z)], rate.cat = 3,
-                        node.states = "none", nstarts = 0,
+                        node.states = "none", nstarts = 1,
                         n.cores = 1)
 )
