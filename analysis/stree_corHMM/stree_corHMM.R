@@ -9,7 +9,7 @@ library(here)
 setwd(here("analysis/stree_corHMM"))
 
 # Read in tree and traits------------------------------------------------------
-stree <- mtree <- read.nexus(here("data/updated_trees_traits/stree_traits", 
+stree <- read.nexus(here("data/updated_trees_traits/stree_traits", 
                                   "stree.trees"))
 
 traits <- fread(here("data/updated_trees_traits/stree_traits",
