@@ -10,6 +10,8 @@ setwd(here("analysis_rerun/stree_corHMM/stree_1rate"))
 
 # Capture command line arguments
 args <- commandArgs(trailingOnly = T)
+# Interprets options as characters. Change to integer
+args <- as.integer(args)
 
 # Read in tree and traits------------------------------------------------------
 stree <- read.nexus(here("data/updated_trees_traits/stree_traits", 
@@ -42,6 +44,6 @@ stree_1rate <- corHMM(stree[[args[1]]], data = tframe[, .(rn, Z)], rate.cat = 1,
                       n.cores = 1)
 
 # Write to file----------------------------------------------------------------
-saveRDS(stree_1rate, 
-        file = paste("stree-1rate", "-", "t", args[1], "-", "r", args[2], 
+saveRDS(stree_1rate,
+        file = paste("stree-1rate", "-", "t", args[1], "-", "r", args[2],
                      sep = ""))
