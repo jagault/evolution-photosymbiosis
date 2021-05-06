@@ -3,6 +3,10 @@
 This repo contains data and scripts necessary to replicate the results from our publication.  
 
 ### Running analysis in Docker container  
+The `dockerfiles` directory includes two different dockerfiles that can be used to replicate the analysis.
+
+
+#### rstudio-v3-5-3
 
 The Dockerfile contains instructions to build an image with Rstudio with R version 3.5.3. All packages and libraries necessary for the analysis are included in the image. The image can be downloaded directly from Dockerhub or built from the Dockerfile. 
 
@@ -10,11 +14,11 @@ Pull the image directly from Dockerhub via the following:
 
 `docker pull jagault/evolution-photosymbiosis:rstudiov3.5.3`
 
-Or build the image via the following:
+Or, from within the directory containing the Dockerfile, build the image via the following:
 
-`docker build -t jagault/evolution-photosymbiosis:rstudiov3.5.3 .`  
+`docker build . -t jagault/evolution-photosymbiosis:rstudiov3.5.3`  
 
-Once the image is built, it can be run via the following command:
+Once the image is built, it can be run within the main repo directory `/evolution-photosymbiosis` via the following command:
 
 `docker run -d -p 8787:8787 -v /path/to/repo:/home/rstudio -e PASSWORD=yourpasswordhere jagault/evolution-photosymbiosis:rstudiov3.5.3`  
 
@@ -27,6 +31,22 @@ Rstudio no longer supports the use of the default password when none is specifie
 The use of `-v /path/to/repo:/home/rstudio` will set up a bind mount between the project repo and rstudio within the container. All files within the repo will be available within Rstudio and saved changes will persist outside of the container.  
 
 Because the corHMM analyses take a very long time to run, it is recommended that they are not run through the Rstudio console. Rather it is better to source the scripts to R through the terminal. This way the analyses can be monitored via a log file and the R session within Rstudio can be refreshed freely. The analyses can also be run in the background through the terminal via `tmux` or `screen`. Neither are included with the container but can be installed within it if desired. R and all files within the repo are available through the terminal window included with Rstudio.
+
+#### rver-v3-5-3
+
+The Dockerfile contains instructions to build an image with command line base R version 3.5.3. All packages and libraries necessary for the analysis are included in the image. The image can be downloaded directly from Dockerhub or built from the Dockerfile. 
+
+Pull the image directly from Dockerhub via the following:
+
+`docker pull jagault/evolution-photosymbiosis:rver3.5.3`
+
+Or, from within the directory containing the Dockerfile, build the image via the following:
+
+`docker build . -t jagault/evolution-photosymbiosis:rver3.5.3`  
+
+Once the image is built, it can be run within the main repo directory `/evolution-photosymbiosis` via the following command:
+
+`docker run -ti jagault/evolution-photosymbiosis:rver3.5.3`  
 
 ### Structure of repository  
 
