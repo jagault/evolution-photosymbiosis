@@ -48,6 +48,20 @@ Once the image is built, it can be run within the main repo directory `/evolutio
 
 `docker run -ti jagault/evolution-photosymbiosis:rver3.5.3`  
 
+#### rscriptv3.5.3
+
+This image is built with an entrypoint to Rscript. Running this container automatically calls Rscript which will run a specified R script with optional arguments. The R script must be in the same directory from which you are running the container or a path must be provided. 
+
+The image can be pulled from Docker Hub or built with the following commands. 
+
+`docker pull jagault/evolution-photosymbiosis:rscript3.5.3`
+
+`docker build . -t jagault/evolution-photosymbiosis:rscript3.5.3` 
+
+Below is an example command for running `stree-1rate.R`. This script takes the posterior distribution of supertrees and associated traits and runs the corHMM analysis with a single rate category. The ouput is a `.rds` file that contains the results. This script takes two additional arguments. The first argument designates which tree to select (in this case `1`) and the second designates which replicate which will be used to name the output file (in this case `2`). The output file in this case will be named `stree-1rate-t1-r2.rds`. 
+
+`docker run -ti -v /home/jordan/Documents/bind_test:/home/analysis bind_test stree-1rate.R 1 2`
+
 ### Structure of repository  
 
 `/R` contains helper functions used through the scripts.  
