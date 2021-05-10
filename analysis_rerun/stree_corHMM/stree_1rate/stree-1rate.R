@@ -45,5 +45,5 @@ stree_1rate <- corHMM(stree[[args[1]]], data = tframe[, .(rn, Z)], rate.cat = 1,
 
 # Write to file----------------------------------------------------------------
 saveRDS(stree_1rate,
-        file = paste("stree-1rate", "-", "t", args[1], "-", "r", args[2],
-                     sep = ""))
+        file = paste("stree-1rate", "-", "t", args[1], "-", "r", args[2], 
+                     ".rds", sep = ""))
