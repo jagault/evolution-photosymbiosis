@@ -3,10 +3,11 @@ library(phytools)
 library(data.table)
 library(phangorn)
 library(corHMM)
-library(here)
+# library(here)
 
 # Set working directory
-setwd(here("analysis_rerun/stree_corHMM/stree_1rate"))
+# setwd(here("analysis_rerun/stree_corHMM/stree_1rate"))
+setwd("/home/analysis")
 
 # Capture command line arguments
 args <- commandArgs(trailingOnly = T)
@@ -14,11 +15,16 @@ args <- commandArgs(trailingOnly = T)
 args <- as.integer(args)
 
 # Read in tree and traits------------------------------------------------------
-stree <- read.nexus(here("data/updated_trees_traits/stree_traits", 
-                         "stree.trees"))
+# stree <- read.nexus(here("data/updated_trees_traits/stree_traits", 
+#                          "stree.trees"))
+# 
+# traits <- fread(here("data/updated_trees_traits/stree_traits",
+#                      "stree_traits_B_as_Z.csv"),
+#                 header = FALSE, col.names = c("taxa", "state"))
 
-traits <- fread(here("data/updated_trees_traits/stree_traits",
-                     "stree_traits_B_as_Z.csv"),
+stree <- read.nexus("stree.trees")
+
+traits <- fread(file = "stree_traits_B_as_Z.csv", 
                 header = FALSE, col.names = c("taxa", "state"))
 
 # Format traits and tip labels-------------------------------------------------
