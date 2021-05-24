@@ -5,7 +5,7 @@ library(phangorn)
 library(corHMM)
 
 # Set working directory
-setwd("/home/analysis")
+# setwd("/home/analysis")
 
 # Capture command line arguments
 args <- commandArgs(trailingOnly = T)
