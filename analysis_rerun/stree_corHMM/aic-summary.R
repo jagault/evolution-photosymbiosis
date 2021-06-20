@@ -1,7 +1,4 @@
 # Load packages
-library(phytools)
-library(data.table)
-library(phangorn)
 library(here)
 
 # Set working directory
