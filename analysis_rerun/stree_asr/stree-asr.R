@@ -39,7 +39,7 @@ tframe <- data.table(tframe, keep.rownames = TRUE)
 # Read in corHMM runs----------------------------------------------------------
 rate3 <- readRDS("stree_3rate.rds")
 
-# Make rate vectors------------------------------------------------------------# 3 rate
+# Make rate vectors-------------------------------------------------------------
 par3 <- sapply(rate3, "[", "solution")
 par3 <- lapply(par3, as.vector)
 par3 <- lapply(par3, na.omit)
