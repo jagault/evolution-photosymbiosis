@@ -12,8 +12,6 @@ path <- c("~/Dropbox/osg_results/stree/mtree/mtree_1rate")
 
 # Initialize vector for number of trees
 t <- c(1:3361)
-# Initialize vector for number of replicates per tree
-r <- c(1:99)
 
 # Create empty vectors and lists to hold results
 files <- c()
@@ -24,13 +22,12 @@ reps <- c()
 
 # Loop through results and save max-likelihood results for each tree
 for (i in 1:length(t)){
-  for (j in 1:length(r)){
-    
-    files[j] <- paste(path, "1-rate_", i, "mtree-1rate-t", i, "-r", j, ".rds", 
-                      sep = "")
-    results[[j]] <- readRDS(files[j])
-    liks[j] <- results[[j]]$loglik
-  }
+  files <- list.files(path = paste(path, "/1-rate_", i, sep = ""), 
+                      pattern = ".rds", full.names = T)
+  
+  results <- lapply(files, readRDS)
+  
+  liks <- sapply(results, "[", "loglik", simplify = T)
   
   maxl[[i]] <- results[[which.max(liks)]]
   reps[i] <- length(liks)
