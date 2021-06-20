@@ -20,21 +20,16 @@ traits <- fread(file = "stree_traits_B_as_Z.csv",
                 header = FALSE, col.names = c("taxa", "state"))
 
 # Format traits and tip labels-------------------------------------------------
-# Make vector of traits
-tvec <- traits[, state]
-names(tvec) <- traits[, taxa]
-
-# Drop taxa without data from tree and traits
-stree <- lapply(stree, drop.tip, tip = names(tvec[tvec == "-"]))
+# Drop taxa without data from tree
+stree <- lapply(stree, drop.tip, tip = traits[state == "-", taxa])
 class(stree) <- "multiPhylo"
 
-# Remove taxa with missing data
-tvec <- tvec[!tvec == "-"]
+# Remove taxa with missing data from traits
+traits <- traits[state != "-"]
 
-# Make dataframe of traits for corHMM
-tm <- to.matrix(tvec, c("A","Z"))
-tframe <- data.frame(tm)
-tframe <- data.table(tframe, keep.rownames = TRUE)
+# Format trait data for corHMM
+traits[state == "Z", Z := 1]
+traits[state == "A", Z := 0]
 
 # Read in corHMM runs----------------------------------------------------------
 rate3 <- readRDS("stree-3rate.rds")
