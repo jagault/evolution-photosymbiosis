@@ -40,7 +40,7 @@ par3 <- lapply(par3, as.vector)
 par3 <- lapply(par3, na.omit)
 
 # Estimate ancestral states----------------------------------------------------
-anc3 <- ancRECON(stree[[args[1]]], p = par3[args[1]], 
+anc3 <- ancRECON(stree[[args[1]]], p = par3[[args[1]]], 
                  data = traits[, .(taxa, Z)], method = "marginal", hrm = TRUE, 
                  rate.cat = 3)
 
