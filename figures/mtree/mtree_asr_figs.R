@@ -8,7 +8,7 @@ library(here)
 setwd(here("figures/mtree"))
 
 # Source helper functions for plotting
-source(here("R/plotting_functions.R"))
+source(here("R/asr-plot.R"))
 
 
 # Read in tree and traits------------------------------------------------------
