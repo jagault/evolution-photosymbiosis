@@ -10,7 +10,7 @@ setwd(here("analysis_rerun/results/stree/rates/"))
 options(scipen = 999)
 
 # Source helper functions
-source(here("R/asr-plot.R"))
+source(here("R/aic-rate-summary.R"))
 
 
 # Read in corHMM runs----------------------------------------------------------
