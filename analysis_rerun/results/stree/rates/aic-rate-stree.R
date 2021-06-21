@@ -29,10 +29,10 @@ sr4 <- corSumm(r4, rate.cat = 4)
 
 ### Model selection~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # AICc weights
-daic1 <- 335.6 - 277.5
-daic2 <- 286.6 - 277.5
-daic3 <- 277.5 - 277.5
-daic4 <- 287.5 - 277.5
+daic1 <- 335.5603 - 277.5107
+daic2 <- 286.5664 - 277.5107
+daic3 <- 277.5107 - 277.5107
+daic4 <- 287.4847 - 277.5107
 
 rl1 <- exp(-.5*daic1)
 rl2 <- exp(-.5*daic2)
@@ -94,10 +94,10 @@ ggplot(maic, aes(x = model, y = -aic, group = 1)) + geom_point() + geom_path() +
 
 
 ### Line plot for log-likelihoods
-lik1 <- unlist(sapply(rate1, "[", "loglik"))
-lik2 <- unlist(sapply(rate2, "[", "loglik"))
-lik3 <- unlist(sapply(rate3, "[", "loglik"))
-lik4 <- unlist(sapply(rate4, "[", "loglik"))
+lik1 <- unlist(sapply(r1, "[", "loglik"))
+lik2 <- unlist(sapply(r2, "[", "loglik"))
+lik3 <- unlist(sapply(r3, "[", "loglik"))
+lik4 <- unlist(sapply(r4, "[", "loglik"))
 
 
 loglik <- data.table("TH" = lik1, "HRM+2" = lik2, "HRM+3" = lik3, 
