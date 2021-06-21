@@ -92,10 +92,10 @@ ggplot(maic, aes(x = model, y = -aic, group = 1)) + geom_point() + geom_path() +
 
 
 ### Line plot for log-likelihoods
-lik1 <- unlist(sapply(rate1, "[", "loglik"))
-lik2 <- unlist(sapply(rate2, "[", "loglik"))
-lik3 <- unlist(sapply(rate3, "[", "loglik"))
-lik4 <- unlist(sapply(rate4, "[", "loglik"))
+lik1 <- unlist(sapply(r1, "[", "loglik"))
+lik2 <- unlist(sapply(r2, "[", "loglik"))
+lik3 <- unlist(sapply(r3, "[", "loglik"))
+lik4 <- unlist(sapply(r4, "[", "loglik"))
 
 
 loglik <- data.table("TH" = lik1, "HRM+2" = lik2, "HRM+3" = lik3, 
