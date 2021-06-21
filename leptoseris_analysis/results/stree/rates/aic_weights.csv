@@ -1,0 +1,5 @@
+model,num.rate.class,num.param,mean.AICc,AICc.weight.percent
+TH,1,2,346.028,0
+HRM+2,2,8,298.272,0.535
+HRM+3,3,14,287.836,98.775
+HRM+4,4,20,297.766,0.689
