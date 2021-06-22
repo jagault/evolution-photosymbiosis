@@ -31,6 +31,9 @@ class(stree) <- "multiPhylo"
 fanc3 <- readRDS(here("leptoseris_analysis/analysis/stree_asr", 
                       "stree-lt-nodeframes.rds"))
 
+# Read in 1000 individual asrs
+anc3 <- readRDS(here("leptoseris_analysis/analysis/stree_asr", 
+                     "stree-asr-lt.rds"))
 
 # Prep consensus tree for plotting---------------------------------------------
 # Make consensus tree
@@ -92,4 +95,29 @@ plotSimmap(m3.asr, type = "fan", fsize = 0.3, r3.cols, lwd = 1)
 nodelabels(pie = as.matrix(fanc3$lik.anc.states), cex = 0.05,
            piecol = r3.cols[-1])
 tiplabels(pch = 19, cex = 0.5, col = trait.cols[ctree$tip.label])
+dev.off()
+
+
+# Plot individual asrs---------------------------------------------------------
+# Format asr's for plotting function 
+anc3 <- lapply(anc3, "[[", "lik.anc.states")
+anc3 <- lapply(anc3, data.table)
+anc3 <- lapply(anc3, setnames, c("AS", "ZS", "AM", "ZM", "AF", "ZF"))
+names(anc3) <- rep("lik.anc.states", length(anc3))
+
+# Paint all 100 trees
+all.paint <- list()
+for (i in 1:length(stree)){
+  all.paint[[i]] <- maxPaint(stree[[i]], anc3[i], rate.cat = 3)
+}
+
+# Save as a pdf
+vec <- c(1:1000)
+pdf(file = "stree_individual_asr.pdf", width = 50, height = 500)
+layout(matrix(1:1000, 50, 20, byrow = TRUE))
+for(i in 1:length(all.paint)){
+  plotSimmap(all.paint[[i]], ftype = "off", r3.cols, 
+             mar = c(0.1, 0.1, 1.5, 0.1))
+  mtext(vec[i])
+}
 dev.off()
