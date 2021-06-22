@@ -39,4 +39,4 @@ ctree <- consensus(stree, p = 0.95)
 nodeframes <- mcCtreeAnc(trees = stree, ctree = ctree, clist = anc)
 
 # Write to file
-saveRDS(nodeframes, "stree_lt_nodeframes.rds")
+saveRDS(nodeframes, "stree-lt-nodeframes.rds")

@@ -29,7 +29,7 @@ class(stree) <- "multiPhylo"
 # Read in corHMM runs----------------------------------------------------------
 # Read in asr summarized across all 1000 trees
 fanc3 <- readRDS(here("leptoseris_analysis/analysis/stree_asr", 
-                      "stree_lt_nodeframes.rds"))
+                      "stree-lt-nodeframes.rds"))
 
 
 # Prep consensus tree for plotting---------------------------------------------
