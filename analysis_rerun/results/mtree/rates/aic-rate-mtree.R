@@ -25,17 +25,17 @@ sr3 <- corSumm(r3, rate.cat = 3)
 
 ### Model selection~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # AICc weights
-daic1 <- 335.5603 - 277.5107
-daic2 <- 286.5664 - 277.5107
-daic3 <- 277.5107 - 277.5107
+daic1 <- 181.5225 - 169.4208
+daic2 <- 169.4208 - 169.4208
+daic3 <- 173.9234 - 169.4208
 
 rl1 <- exp(-.5*daic1)
 rl2 <- exp(-.5*daic2)
 rl3 <- exp(-.5*daic3)
 
-aicw1 <- rl1/sum(rl1, rl2, rl3, rl4)
-aicw2 <- rl2/sum(rl1, rl2, rl3, rl4)
-aicw3 <- rl3/sum(rl1, rl2, rl3, rl4)
+aicw1 <- rl1/sum(rl1, rl2, rl3)
+aicw2 <- rl2/sum(rl1, rl2, rl3)
+aicw3 <- rl3/sum(rl1, rl2, rl3)
 
 # Summary table
 aic.table <- data.table(model = c("TH", "HRM+2", "HRM+3"),
@@ -148,4 +148,3 @@ sr3q[, c("minus", "plus") := list(round(median-lci, 3), round(uci-median, 3))]
 fwrite(sr1q, file = "1rate_rates.csv")
 fwrite(sr2q, file = "2rate_rates.csv")
 fwrite(sr3q, file = "3rate_rates.csv")
-fwrite(sr4q, file = "4rate_rates.csv")
