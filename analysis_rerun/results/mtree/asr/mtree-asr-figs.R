@@ -86,45 +86,45 @@ ctree <- drop.tip(ctree, "Anthemiphyllia_patera")
 
 # Root
 ctree$edge.length[1] <- ctree$edge.length[1] + 0.3
-ctree$edge.length[844] <- ctree$edge.length[844] + 0.3
+ctree$edge.length[835] <- ctree$edge.length[835] + 0.3
 
 ### Robusta
-ctree$edge.length[744] <- ctree$edge.length[744] + 0.01
-ctree$edge.length[743] <- ctree$edge.length[743] - 0.01
-ctree$edge.length[774] <- ctree$edge.length[774] + 0.01
+ctree$edge.length[735] <- ctree$edge.length[735] + 0.01
+ctree$edge.length[734] <- ctree$edge.length[734] - 0.01
+ctree$edge.length[764] <- ctree$edge.length[764] + 0.01
 
-ctree$edge.length[617] <- ctree$edge.length[617] + 0.01
-ctree$edge.length[616] <- ctree$edge.length[616] - 0.01
-ctree$edge.length[696] <- ctree$edge.length[696] + 0.01
+ctree$edge.length[611] <- ctree$edge.length[611] + 0.01
+ctree$edge.length[610] <- ctree$edge.length[610] - 0.01
+ctree$edge.length[688] <- ctree$edge.length[688] + 0.01
 
-ctree$edge.length[388] <- ctree$edge.length[388] + 0.01
-ctree$edge.length[386] <- ctree$edge.length[386] - 0.01
-ctree$edge.length[607] <- ctree$edge.length[607] + 0.01
-ctree$edge.length[610] <- ctree$edge.length[610] + 0.01
+ctree$edge.length[385] <- ctree$edge.length[385] + 0.01
+ctree$edge.length[383] <- ctree$edge.length[383] - 0.01
+ctree$edge.length[601] <- ctree$edge.length[601] + 0.01
+ctree$edge.length[604] <- ctree$edge.length[604] + 0.01
 
-ctree$edge.length[387] <- ctree$edge.length[387] + 0.01
-ctree$edge.length[386] <- ctree$edge.length[386] - 0.01
-ctree$edge.length[610] <- ctree$edge.length[610] + 0.01
+ctree$edge.length[384] <- ctree$edge.length[384] + 0.01
+ctree$edge.length[383] <- ctree$edge.length[383] - 0.01
+ctree$edge.length[604] <- ctree$edge.length[604] + 0.01
 
 
 ### Complexa
-ctree$edge.length[171] <- ctree$edge.length[171] + 0.01
-ctree$edge.length[170] <- ctree$edge.length[170] - 0.01
-ctree$edge.length[377] <- ctree$edge.length[377] + 0.01
+ctree$edge.length[169] <- ctree$edge.length[169] + 0.01
+ctree$edge.length[168] <- ctree$edge.length[168] - 0.01
+ctree$edge.length[374] <- ctree$edge.length[374] + 0.01
 
-ctree$edge.length[172] <- ctree$edge.length[172] + 0.01
-ctree$edge.length[170] <- ctree$edge.length[170] - 0.01
-ctree$edge.length[365] <- ctree$edge.length[365] + 0.01
-ctree$edge.length[377] <- ctree$edge.length[377] + 0.01
+ctree$edge.length[170] <- ctree$edge.length[170] + 0.01
+ctree$edge.length[168] <- ctree$edge.length[168] - 0.01
+ctree$edge.length[362] <- ctree$edge.length[362] + 0.01
+ctree$edge.length[374] <- ctree$edge.length[374] + 0.01
 
-ctree$edge.length[337] <- ctree$edge.length[337] + 0.01
-ctree$edge.length[335] <- ctree$edge.length[335] - 0.01
-ctree$edge.length[360] <- ctree$edge.length[360] + 0.01
-ctree$edge.length[361] <- ctree$edge.length[361] + 0.01
+# ctree$edge.length[337] <- ctree$edge.length[337] + 0.01
+# ctree$edge.length[335] <- ctree$edge.length[335] - 0.01
+# ctree$edge.length[360] <- ctree$edge.length[360] + 0.01
+# ctree$edge.length[361] <- ctree$edge.length[361] + 0.01
 
-ctree$edge.length[336] <- ctree$edge.length[336] + 0.01
-ctree$edge.length[335] <- ctree$edge.length[335] - 0.01
-ctree$edge.length[361] <- ctree$edge.length[361] + 0.01
+ctree$edge.length[334] <- ctree$edge.length[334] + 0.01
+ctree$edge.length[333] <- ctree$edge.length[333] - 0.01
+ctree$edge.length[358] <- ctree$edge.length[358] + 0.01
 
 
 # Format asr for plotting------------------------------------------------------
