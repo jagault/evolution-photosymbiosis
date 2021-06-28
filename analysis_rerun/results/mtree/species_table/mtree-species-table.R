@@ -54,7 +54,7 @@ tip.probs <- tip.probs[, .(AS = mean(AS), ZS = mean(ZS),
 # Drop tips that were dropped from tree
 tip.probs <- tip.probs[-which(species %in% 
                                 c("Discosoma", "Rhodactis", "Ricordea_florida"))]
-tip.probs
+
 
 
 # Add family names-------------------------------------------------------------
