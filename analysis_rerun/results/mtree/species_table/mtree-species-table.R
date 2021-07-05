@@ -100,4 +100,4 @@ setcolorder(tip.probs, c("Family", "Species", "Observed State","Azoox Stable",
 # Drop underscore from species names 
 tip.probs[, Species := gsub("_", " ", tip.probs[, Species])] 
 
-fwrite(tip.probs, file = "mtree_2rate_tip_probs.csv")
+fwrite(tip.probs, file = "mtree-species-table.csv")
