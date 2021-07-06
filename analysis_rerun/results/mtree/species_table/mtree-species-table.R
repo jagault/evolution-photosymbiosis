@@ -16,7 +16,7 @@ mtree <- read.nexus(here("data/updated_trees_traits/mtree_traits",
                          "mtree.trees"))
 
 traits <- fread(file = here("data/updated_trees_traits/mtree_traits",
-                            "mtree_traits_B_as_Z.csv"),
+                            "mtree_traits.csv"),
                 header = FALSE, col.names = c("taxa", "state"))
 
 
@@ -82,9 +82,9 @@ setkey(tip.probs, species)
 
 tip.probs <- merge(tip.probs, traits)
 
-tip.probs[state == "Z", state := "Zooxanthellate"]
-tip.probs[state == "A", state := "Azooxanthellate"]
-tip.probs[state == "B", state := "Facultative"]
+tip.probs[state == "Z", state := "Z"]
+tip.probs[state == "A", state := "AZ"]
+tip.probs[state == "B", state := "F"]
 
 
 # Format tip.probs
