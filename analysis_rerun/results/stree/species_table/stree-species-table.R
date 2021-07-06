@@ -15,7 +15,7 @@ stree <- read.nexus(here("data/updated_trees_traits/stree_traits",
                          "stree.trees"))
 
 traits <- fread(file = here("data/updated_trees_traits/stree_traits",
-                            "stree_traits_B_as_Z.csv"),
+                            "stree_traits.csv"),
                 header = FALSE, col.names = c("taxa", "state"))
 
 
